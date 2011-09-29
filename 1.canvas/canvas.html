@@ -1,0 +1,212 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>first canvas</title>
+	<script src="js/RequestAnimationFrame.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript" src="js/noise.js"></script>
+	<script>
+		
+		var canvas;
+		var context;
+		var particles = new Array();
+		var stageWidth = 500;
+		var stageHeight = 500;
+		var particleNum = 2400;
+		var mx=0;
+		var my=0;
+		var omx=0;
+		var omy=0;
+
+		function init(){
+			
+			//canvas setting
+			canvas = document.getElementById('tutorial');
+			if(canvas.getContext){
+				context = canvas.getContext('2d');
+			}
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			stageWidth = canvas.width;
+			stageHeight = canvas.height;
+			
+			//particles
+			for( var i=0; i<particleNum; i++){
+				var xx = Math.random()*stageWidth;
+				var yy = Math.random()*stageHeight;
+				particles[i] = {
+					x:xx, 
+					y:yy,
+					ox:xx,
+					oy:yy,
+					vx:0,
+					vy:0
+					};
+			}
+			
+		
+			//event
+			canvas.addEventListener('mousemove', mouseMove);
+			window.addEventListener('resize', resize, false);
+			//setInterval( update, 1000/60);
+			animate();
+		}
+		
+		function resize(){
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			stageWidth = canvas.width;
+			stageHeight = canvas.height;
+		}
+		
+		function mouseMove(ev){
+			omx = mx;
+			omy = my;
+			 if (ev.layerX || ev.layerX == 0) { // Firefox
+			    mx = ev.layerX;
+			    my = ev.layerY;
+			  } else if (ev.offsetX || ev.offsetX == 0) { // Opera
+			    mx = ev.offsetX;
+			    my = ev.offsetY;
+			  }
+		}
+		
+		function drawNoise(){
+		 	var imageData = context.createImageData(canvas.width, canvas.height);
+		      //var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+		      for (var x = 0; x < canvas.width; x++)
+		      {
+		         for (var y = 0; y < canvas.height; y++)
+		         {
+		            // calculate the Perlin Noise result
+		            //var result = noise2d(x / canvas.width * 10, y / canvas.height * 10);
+		            var result = fBm2d(x / canvas.width, y / canvas.height , 10);
+		            //var result = turbulence2d(x / canvas.width * 10, y / canvas.height * 10, 8);
+		            //var result = ridgedmf2d(x / canvas.width * 10, y / canvas.height * 10, 8);
+
+		            // convert the result from [-1, 1] to [0, 1]
+		            result = result * 0.5 + 0.5;
+
+		            // convert the result from [0, 1] to [0, 255]
+		            result = result * 255;
+
+		            var index = (x + y * canvas.width) * 4;
+		            imageData.data[index    ] = result;   //Red
+		            imageData.data[index + 1] = result;   //Green
+		            imageData.data[index + 2] = result;   //Blue
+		            imageData.data[index + 3] = 255;      //Alpha
+		         }
+		      }
+		      context.putImageData(imageData, 0, 0);
+		}
+		
+		var t1 =0;
+		var t2 =0;
+		
+		var mp = 0;
+		
+		function update(){
+			
+			//calcurate mouse force
+			var mvx = (-mx+omx);
+			var mvy = (-my+omy);
+			mp += Math.sqrt( (omx-mx)*(omx-mx)+(omy-my)*(omy-my))*1.5;
+			mp += (0-mp)/100;
+			
+			var l = particles.length;
+			var range = 10;
+			t1+=0.004;
+			t2+=0.008;
+			
+			for(var i=0; i<l; i++){
+				var pt = particles[i];
+				pt.ox = pt.x;
+				pt.oy = pt.y;
+				
+				//noise
+				var resultX = fBm2d( t1+pt.x / stageWidth, t1+pt.y/stageHeight, 10);
+				var resultY = fBm2d( t2+pt.x / stageWidth, t2+pt.y/stageHeight, 20);
+				pt.vx += resultX*1.5;
+				pt.vy += resultY*1.5;
+				
+				//mouseforce
+				var dist = Math.sqrt(  (my-pt.y)*(my-pt.y) + (mx-pt.x)*(mx-pt.x) );
+				var forceX = pt.x-mx;
+				var forceY = pt.y-my;
+
+				//normalize
+				var len = Math.sqrt(forceX*forceX+forceY*forceY);
+				if(len>0) len=1/len;
+				forceX*=len;
+				forceY*=len;
+				
+				//add power
+				pt.vx += forceX*mp*1/dist*0.03;
+				pt.vy += forceY*mp*1/dist*0.03;
+				
+				//set prop				
+				pt.x += pt.vx;
+				pt.y += pt.vy;
+				
+				pt.vx += (0-pt.vx)/10;
+				pt.vy += (0-pt.vy)/10;
+				
+				
+				//loop
+				if(pt.x<-10
+				|| pt.x>stageWidth+10
+				|| pt.y<-10
+				|| pt.y>stageHeight+10) {
+					do{
+						var rx = Math.random()*stageWidth;
+						var ry = Math.random()*stageHeight;
+					}while(	Math.sqrt((rx-mx)*(rx-mx)+(ry-my)*(ry-my))<50)
+					
+					
+					pt.x = pt.ox = rx;
+					pt.y = pt.oy = ry;
+					pt.vx = 0;
+					pt.vy = 0;
+				}
+			}
+			draw();
+		}
+	
+		function draw(){
+				
+				context.fillStyle = "rgba(0,0,0,0.2)";
+				context.fillRect(0,0,stageWidth, stageHeight)
+				context.beginPath();
+				
+				var l=particles.length;
+				context.strokeStyle = "rgb(189, 182, 179)";
+				for(var i=0; i<l; i++){
+					var pt = particles[i];
+					context.moveTo(pt.ox, pt.oy);
+					context.lineTo(pt.x, pt.y);
+				}
+				context.stroke();
+				
+		}
+		
+		function animate(){
+			requestAnimationFrame(animate);
+			update();
+		}
+		
+		
+		
+	</script>
+	<style>
+	 body{
+		margin:0;
+		padding:0;
+		background-color:#000000;
+	}
+	</style>
+</head>
+
+<body onload="init();">
+	<canvas id="tutorial" width="960" height="500"></canvas>
+</body>
+</html>
