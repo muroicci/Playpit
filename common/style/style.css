@@ -1,0 +1,93 @@
+body{
+	margin:0;
+	padding:0;
+	background-color:#000000;
+	overflow: hidden;	
+	color:#ffffff;
+}
+
+a{
+	text-decoration: none;
+	color: #ccc;
+}
+
+a:hover{
+	text-decoration: none;
+}
+
+
+header{
+	position: fixed;	
+	top: 30px;
+	left: 30px;
+}
+
+header>h1{
+	font: 18px/18px "MisoBold", Verdana, sans-serif;
+	text-transform: uppercase;
+	text-indent: 3px;
+	margin-left: -3px;
+}
+
+div#content{
+	position: fixed;
+	top:0px;
+	left:195px;
+	border-left: 1px solid rgba(255,255,255,0.2);
+	width:180px;
+	height:128px;
+	overflow: visible;
+}
+
+nav{
+	padding: 30px 0px 22px 5px;
+}
+
+nav ul{
+}
+
+nav li{
+	list-style: none;
+	display:inline;
+}
+
+section{
+	overflow: visible;
+}
+
+section>h1{
+	font: 69px/59px "MisoLight", Verdana, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: -5px;
+	float:left;
+	width:63px;
+	height:45px;
+	padding: 0px 0px 0px 2px;
+}
+
+section>p{
+	float:left;
+	font: 12px/15px "MisoRegular", Verdana, sans-serif;
+	text-transform: uppercase;
+	width:115px;
+}
+
+
+footer{
+	
+}
+
+.copyright{
+	font: 9px/12px "MisoRegular", Verdana, sans-serif;
+	letter-spacing: 1px;
+	margin:0;
+	padding: 0;
+	width:250px;
+	height:20px;
+	position: fixed;
+	top:143px;
+	right:-71px;
+	-webkit-transform: rotate(90deg); 
+	-moz-transform: rotate(90deg);
+	text-transform: uppercase;
+}

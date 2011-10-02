@@ -57,23 +57,6 @@
 			target = new THREE.Object3D();
 			camera.target = target;
 			
-			//for cubic map
-			// cameraCube = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
-			// camera.position.z = 400;
-			// sceneCube = new THREE.Scene();
-			// 
-			// var urls = [];
-			// var textureCube = THREE.ImageUtils.loadTextureCube( "textures/background.jpg", new THREE.CubeRefractionMapping() );
-			// var shader = THREE.ShaderUtils.lib["cube"];
-			// shader.uniforms["tCube"].texture = textureCube;
-			// var material = new THREE.MeshShaderMaterial({
-			// 	fragmentShader: shader.fragmentShader,
-			// 	vertexShader: shader.vertexShader,
-			// 	uniforms: shader.uniform
-			// });
-			// mesh = new THREE.Mesh( new THREE.CubeGeometry(1000, 1000, 1000, 1,1,1,null,true), material );
-			// sceneCube.addObject( mesh );			
-			
 			//Material
 			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
 			particleMaterial = new THREE.ParticleBasicMaterial({
@@ -298,6 +281,7 @@
 				line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
 				scene.addChild( line );
 			}
+			
 			//rotate objects
 			// particles.rotation.y += rotationSpeed;
 			// particles.rotation.x += rotationSpeed;

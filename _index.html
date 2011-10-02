@@ -3,31 +3,38 @@
 <head>
 	<meta charset="UTF-8">
 	<title>playpit</title>
-	<link rel="stylesheet" href="style/font.css" type="text/css" media="screen" title="no title" charset="utf-8">
-	<link rel="stylesheet" href="style/tate-style.css" type="text/css" media="screen" title="no title" charset="utf-8">
-	<link rel="stylesheet" href="style/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	<link rel="stylesheet" href="common/style/reset.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	<link rel="stylesheet" href="common/style/font.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	<link rel="stylesheet" href="common/style/tate-style.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	<link rel="stylesheet" href="common/style/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
 </head>
 <body>
-	<div id="header">
-		<h1>playpit.kowareru.com</h1>
-	</div>
+	<header>
+		<h1>playpit<br />.kowareru<br />.com</h1>
+	</header>
 	<div id="content">
-		<ul>
-			<li><a href="#">Previous</a></li>
-			<li><a href="#">Next</a></li>
-		</ul>
-		<ul>
-			<li><a href="#">1</a></li>
-			<li><a href="#">2</a></li>
-			<li><a href="#">3</a></li>
-			<li><a href="#">4</a></li>
-			<li><a href="#">5</a></li>
-			<li><a href="#">6</a></li>
-		</ul>
-		<h2>.06</h2>
-		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+		<nav>
+			<ul class="next_prev_nav">
+				<li><a href="#"><img src="common/images/arrow_prev.png" width="10" height="8" alt="Previous"></a></li>
+				<li><a href="#"><img src="common/images/arrow_next.png" width="10" height="8" alt="Next"></a></li>
+			</ul>
+			<ul class="content_menus">
+				<li><a href="#">●</a></li>
+				<li><a href="#">●</a></li>
+				<li><a href="#">●</a></li>
+				<li><a href="#">●</a></li>
+				<li><a href="#">●</a></li>
+				<li><a href="#">●</a></li>
+			</ul>
+		</nav>
+		<section>
+			<h1>06</h1>
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+		</section>
 	</div>
+	<footer>
 		<div class="tate-area"><div class="tate-line">実験サイト</div></div>
 		<div class="copyright">2011 copyrights all rights reserved.</div>
+	</footer>
 </body>
 </html>
