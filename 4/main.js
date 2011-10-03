@@ -43,6 +43,7 @@
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
+			group.position.y = -75;
 			
 			for( var i=0; i<particleNum; i++){
 				//create particles;
@@ -82,7 +83,6 @@
 			renderer.setSize( window.innerWidth, window.innerHeight);
 			renderer.sortObjects = false;
 			container.appendChild( renderer.domElement );
-			
 			
 			//event
 			document.addEventListener('mousemove', mouseMove);
@@ -127,7 +127,7 @@
 //			camera.position.x += (mx - camera.position.x) * 0.05;
 			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
 			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
-			
+
 			renderer.render( scene, camera );
 		}
 		
@@ -148,8 +148,8 @@
 				
 				//noise
 				var result = fBm2d( p.x/2 + ofx, p.y/2, 10);
-				v.x += (result)*0.000375;
-				v.y += (result)*0.000375;
+				v.x += (result)*0.000175;
+				v.y += (result)*0.000175;
 				
 				//set prop
 				

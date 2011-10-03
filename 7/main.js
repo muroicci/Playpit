@@ -132,10 +132,10 @@
 			window.addEventListener('resize', resize, false);
 			
 			//stats
-			stats = new Stats();
-			stats.domElement.style.position = 'absolute';
-			stats.domElement.style.top = '0px';
-			container.appendChild( stats.domElement );
+			// stats = new Stats();
+			// stats.domElement.style.position = 'absolute';
+			// stats.domElement.style.top = '0px';
+			// container.appendChild( stats.domElement );
 			
 			animate();
 			
@@ -175,7 +175,7 @@
 			
 			update();
 			render();
-			stats.update();
+			//stats.update();
 		}
 		
 		function render(){

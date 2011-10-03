@@ -1,80 +1,87 @@
-data= [
+[
 
 {
-	link:"/1/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/1/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#ffaa33",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to scatter particles."
 },
 
 {
-	link:"/2/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/2/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#ff5500",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to scatter particles."
 },
 
 {
-	link:"/3/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/3/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#457816",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to change angle."
 },
 
 {
-	link:"/4/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/4/index.html",
+	"backgroundColor":"#cc0000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#114455",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to change angle."
 },
 
 {
-	link:"/5/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/5/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#ff8899",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to change angle."
 },
 
 {
-		link:"/6/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/6/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#333333",
+	"themeColor":"#ffcc00",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Move your mouse to change angle."
 },
 
 {
-	link:"/7/index.html",
-	backgroundColor:0x000000,
-	textColor1:0xffffff,
-	textColor2:0x666666,
-	textColor3:0x333333,
-	themeColor:0xffaa00,
-	subColor1:0xdd0000,
-	subColor2:0x118888
+	"link":"/7/index.html",
+	"backgroundColor":"#222222",
+	"textColor1":"#ffffff",
+	"textColor2":"#666666",
+	"textColor3":"#444444",
+	"themeColor":"#dd0000",
+	"subColor1":"#dd0000",
+	"subColor2":"#118888",
+	"text":"Click to explode."
 }
 
 ]
