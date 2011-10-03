@@ -2,8 +2,8 @@
 <head>
 	<meta charset="UTF-8">
 	<title>first canvas</title>
-	<script src="../common/js/RequestAnimationFrame.js" type="text/javascript" charset="utf-8"></script>
-	<script src="../common/js/noise.js" type="text/javascript"></script>
+	<script src="/common/js/RequestAnimationFrame.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/noise.js" type="text/javascript"></script>
 	<script>
 		
 		var canvas;
@@ -20,7 +20,7 @@
 		function init(){
 			
 			//canvas setting
-			canvas = document.getElementById('tutorial');
+			canvas = document.getElementById('main');
 			if(canvas.getContext){
 				context = canvas.getContext('2d');
 			}
@@ -195,7 +195,6 @@
 		}
 		
 		
-		
 	</script>
 	<style>
 	 body{
@@ -206,7 +205,10 @@
 	</style>
 </head>
 
-<body onload="init();">
-	<canvas id="tutorial" width="960" height="500"></canvas>
+<body>
+	<canvas id="main"></canvas>
+	<script type="text/javascript">
+		init();
+	</script>
 </body>
 </html>

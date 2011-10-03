@@ -58,7 +58,7 @@
 			camera.target = target;
 			
 			//Material
-			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
+			var texture = THREE.ImageUtils.loadTexture( "/7/textures/100px_circle.png");
 			particleMaterial = new THREE.ParticleBasicMaterial({
 				color:0xffffff,
 				map:texture,

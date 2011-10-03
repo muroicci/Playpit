@@ -1,0 +1,80 @@
+data= [
+
+{
+	link:"/1/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+	link:"/2/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+	link:"/3/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+	link:"/4/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+	link:"/5/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+		link:"/6/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+},
+
+{
+	link:"/7/index.html",
+	backgroundColor:0x000000,
+	textColor1:0xffffff,
+	textColor2:0x666666,
+	textColor3:0x333333,
+	themeColor:0xffaa00,
+	subColor1:0xdd0000,
+	subColor2:0x118888
+}
+
+]

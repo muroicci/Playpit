@@ -1,4 +1,9 @@
+html{
+	height:100%;
+}
+
 body{
+	height:100%;
 	margin:0;
 	padding:0;
 	background-color:#000000;
@@ -6,15 +11,28 @@ body{
 	color:#ffffff;
 }
 
-a{
+
+a:link{
+	color:#666666;
 	text-decoration: none;
-	color: #ccc;
+}
+
+a:visited{
+	color:#333333;
+	text-decoration: none;
 }
 
 a:hover{
+	color:#ffaa00;
 	text-decoration: none;
 }
 
+.textColor1	{ color:#ffffff }
+.textColor2	{ color:#666666 }
+.textColor3	{ color:#333333 }
+.themeColor	{ color:#ffaa00 }
+.subColor1	{ color:#dd0000 }
+.subColor2	{ color:#118888 }
 
 header{
 	position: fixed;	
@@ -29,7 +47,7 @@ header>h1{
 	margin-left: -3px;
 }
 
-div#content{
+div#content_info{
 	position: fixed;
 	top:0px;
 	left:195px;
@@ -70,6 +88,12 @@ section>p{
 	font: 12px/15px "MisoRegular", Verdana, sans-serif;
 	text-transform: uppercase;
 	width:115px;
+}
+
+iframe{
+	width:100%;
+	height:100%;
+	border: none;
 }
 
 

@@ -48,7 +48,7 @@
 //		 	target.position.y = 50;
 			camera.target = target;
 
-			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
+			var texture = THREE.ImageUtils.loadTexture( "/6/textures/100px_circle.png");
 			material = new THREE.MeshLambertMaterial({
 				color:0x000000,
 				map:texture,
