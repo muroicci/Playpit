@@ -24,14 +24,14 @@ a:visited{
 }
 
 a:hover{
-	color:#ffaa00;
+	color:#ffffff;
 	text-decoration: none;
 }
 
 .textColor1	{ color:#ffffff }
 .textColor2	{ color:#666666 }
 .textColor3	{ color:#333333 }
-.themeColor	{ color:#ffaa00 }
+.themeColor	{ color:#ffffff }
 .subColor1	{ color:#dd0000 }
 .subColor2	{ color:#118888 }
 
@@ -39,6 +39,7 @@ header{
 	position: fixed;	
 	top: 30px;
 	left: 30px;
+	z-index:1;
 }
 
 header>h1{
@@ -56,6 +57,7 @@ div#content_info{
 	width:180px;
 	height:128px;
 	overflow: visible;
+	z-index:1;
 }
 
 nav{
@@ -107,6 +109,13 @@ section>p{
 	width:115px;
 }
 
+#content{
+	width:100%;
+	height:100%;
+	border: none;
+	background-color: #000000;
+}
+
 iframe{
 	width:100%;
 	height:100%;
@@ -114,9 +123,19 @@ iframe{
 	background-color: #000000;
 }
 
+.cover_rect{
+	position: absolute;
+	top:0;
+	left:0;
+	background-color: #000000;
+	width:100%;
+	height:100%;
+	opacity:0.0;
+}
+
 
 footer{
-	
+	z-index:1;
 }
 
 .copyright{

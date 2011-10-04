@@ -13,6 +13,7 @@ var text;
 
 function update(n){
 
+	console.log('update'+ n)
 	//info
 	currentIndex = n;
 	link = siteinfo[currentIndex].link;
@@ -27,17 +28,19 @@ function update(n){
 	
 	//background
 	$('body').css({backgroundColor:backgroundColor})
-
+	
+	var time = 800;
+	
 	//header
-	$('header>h1>span:eq(0)').css({color:textColor1});
-	$('header>h1>span:eq(1)>span').css({color:subColor1});
-	$('header>h1>span:eq(1)').css({color:textColor3});
-	$('header>h1>span:eq(2)>span').css({color:subColor2});
-	$('header>h1>span:eq(2)').css({color:textColor3});
+	$('header>h1>span:eq(0)').stop().animate({color:textColor1}, time);
+	$('header>h1>span:eq(1)').stop().animate({color:subColor1}, time);
+	$('header>h1>span:eq(2)').stop().animate({color:textColor3}, time);
+	$('header>h1>span:eq(3)').stop().animate({color:subColor2}, time);
+	$('header>h1>span:eq(4)').stop().animate({color:textColor3}, time);
 	
 	//heading number
 	$('section>h1').text(String(100+n+1).substr(1,2));
-	$('section>h1').css({color:themeColor});
+	$('section>h1').stop().animate({color:themeColor},1500);
 
 	//border
 	$('div#content_info').css({borderLeftColor:textColor3});
@@ -73,21 +76,23 @@ function update(n){
 	})
 	
 	//text
-	$('section>p').text(text);
-	$('section>p').css({color:textColor2});
+	$('section>p').text(text).animate({color:textColor2}, time);
 	
 	//footer
-	$('div.tate-line').css({color:textColor2});
-	$('div.copyright').css({color:textColor3});
+	$('div.tate-line').stop().animate({color:textColor2}, time);
+	$('div.copyright').stop().animate({color:textColor3}, time);
 	
 	//content
-	$('iframe').attr('src', link);
+		$('<div class="cover_rect"/>').appendTo($('div#content')).animate({opacity:1}, time, 'linear', function(){
+			$('div#content>iframe').remove();
+			$('<iframe/>').attr('src', link).appendTo($('div#content'));
+			$('div.cover_rect').animate({opacity:0},time).remove();
+			console.log('updateEnd'+ n)
+		});
 	
-	//history
-//	$.address.value(currentIndex+1);
 	
 	//title
-	document.title = "playpit | " + (currentIndex+1);
+	document.title = "playpit | " + $('section>h1').text();
 	
 	//widon't
 	jQuery(function($){
@@ -98,6 +103,7 @@ function update(n){
 	    );
 	});
 	
+	
 }
 
 
@@ -106,21 +112,19 @@ function init(){
 	//header
 	$('header>h1').empty();
 	$('<span>playpit</span><br/>').appendTo($('header>h1'));
-	$('<span><span>.</span>kowareru</span><br/>').appendTo($('header>h1'));
-	$('<span><span>.</span>com</span>').appendTo($('header>h1'));
+	$('<span>.</span><span>kowareru</span><br/>').appendTo($('header>h1'));
+	$('<span>.</span><span>com</span>').appendTo($('header>h1'));
 	
 	//next prev
 	
 	//menus
 	$.each( siteinfo, function(i, item){
 		var list = $('<li/>');
-		var a = $('<a>●</a>').attr("href", item.link);
+		var a = $('<a>●</a>').attr("href", item.link)//.attr('rel', "address:/deep-link");
 		a.click(
 			function(){
 				if(currentIndex!=i){
-					//update(i);
-					$.address.value( i+1 );
-					console.log('change')
+					$.address.value( String(i+1) );
 				}
 				return false;
 			}
@@ -132,32 +136,27 @@ function init(){
 }
 
 
-
 $(document).ready(function(d){
 	
 	$.getJSON('index.json', 
 		function(data){
-			
 			siteinfo = data;
 			init();
-			
+
 			$.address.init(function(event){
-			});
-			
+			})
+
 			$.address.change(function(event){
 				var n = Number($.address.value().substr(1) );
 				update( n-1 );
 			})
-			
+
 			var n = Number($.address.value().substr(1) );
 			if(n==0){
 				n = siteinfo.length;
 			}
 			$.address.value( n );
-			
-			
-	});
-	
+		});
 })
 
 
