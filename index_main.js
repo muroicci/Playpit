@@ -83,6 +83,12 @@ function update(n){
 	//content
 	$('iframe').attr('src', link);
 	
+	//history
+//	$.address.value(currentIndex+1);
+	
+	//title
+	document.title = "playpit | " + (currentIndex+1);
+	
 	//widon't
 	jQuery(function($){
 	    $('p').each(
@@ -103,7 +109,6 @@ function init(){
 	$('<span><span>.</span>kowareru</span><br/>').appendTo($('header>h1'));
 	$('<span><span>.</span>com</span>').appendTo($('header>h1'));
 	
-	
 	//next prev
 	
 	//menus
@@ -113,7 +118,9 @@ function init(){
 		a.click(
 			function(){
 				if(currentIndex!=i){
-					update(i);
+					//update(i);
+					$.address.value( i+1 );
+					console.log('change')
 				}
 				return false;
 			}
@@ -130,9 +137,25 @@ $(document).ready(function(d){
 	
 	$.getJSON('index.json', 
 		function(data){
+			
 			siteinfo = data;
 			init();
-			update( data.length-1 );
+			
+			$.address.init(function(event){
+			});
+			
+			$.address.change(function(event){
+				var n = Number($.address.value().substr(1) );
+				update( n-1 );
+			})
+			
+			var n = Number($.address.value().substr(1) );
+			if(n==0){
+				n = siteinfo.length;
+			}
+			$.address.value( n );
+			
+			
 	});
 	
 })

@@ -45,7 +45,8 @@
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
-//		 	target.position.y = 50;
+		 	group.position.y =  target.position.y = -50;
+		
 			camera.target = target;
 
 			var texture = THREE.ImageUtils.loadTexture( "/6/textures/100px_circle.png");
@@ -68,7 +69,7 @@
 			for( var i=0; i<particleNum; i++){
 				
 				//create vectors;
-				pVectors[i] = new THREE.Vector2(Math.random()*pi, Math.random()*pi);
+				pVectors[i] = new THREE.Vector2(Math.random()*2*pi, Math.random()*2*pi);
 				vVectors[i] = new THREE.Vector2( 0, 0);
 				pPos[i] = new THREE.Vector3(sphereR*Math.sin(pVectors[i].y)*Math.cos(pVectors[i].x), sphereR*Math.sin(pVectors[i].y)*Math.sin(pVectors[i].x), sphereR*Math.cos(pVectors[i].y));
 				var pr = particleR*Math.random()*2 + 2;
@@ -148,7 +149,7 @@
 			
 			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
 			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
-			line.rotation.y = group.rotation.y;
+//			line.rotation.y = group.rotation.y;
 			renderer.render( scene, camera );
 		}
 		
@@ -324,10 +325,10 @@
 			}
 
 			//draw lines
-			scene.removeChild(line);
+			group.removeChild(line);
 			line = new THREE.Mesh(meshGeom, meshMat);
 			line.doubleSided = true;
-			scene.addChild(line);
+			group.addChild(line);
 		
 		}
 			
