@@ -9,7 +9,6 @@ body{
 	padding:0;
 	background-color:#000000;
 	overflow: hidden;	
-	color:#ffffff;
 }
 
 
@@ -119,8 +118,9 @@ section>p{
 iframe{
 	width:100%;
 	height:100%;
-	border: none;
+	border: 0;
 	background-color: #000000;
+	z-index:-1;
 }
 
 .cover_rect{
