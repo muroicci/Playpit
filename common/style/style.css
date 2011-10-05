@@ -42,7 +42,7 @@ header{
 }
 
 header>h1{
-	font: 18px/18px "MisoBold", Verdana, sans-serif;
+	font: 18px/18px "MisoRegular", Verdana, sans-serif;
 	text-transform: uppercase;
 	text-indent: 3px;
 	margin-left: -3px;

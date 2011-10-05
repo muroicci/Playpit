@@ -1,4 +1,6 @@
 
+var mottos = ['実験サイト','勉強サイト','自己満足サイト','砂場', '粒子遊び'];
+
 var siteinfo;
 var currentIndex;
 var link;
@@ -67,7 +69,7 @@ function update(n){
 	$.each( siteinfo, function(i, item){
 		var a =  $('ul#content_menus>li:eq('+i+')>a' );
 		if(i==currentIndex){
-			a.css({color:siteinfo[i].themeColor});
+			a.animate({color:siteinfo[i].themeColor},time);
 			a.hover(
 				//mouseover
 				function(){ 
@@ -79,7 +81,7 @@ function update(n){
 				}
 			);
 		}else{
-			a.css({color:textColor2});
+			a.animate({color:textColor3}, time);
 			a.hover(
 				//mouseover
 				function(){ 
@@ -87,7 +89,7 @@ function update(n){
 				},
 				//mouseout
 				function(){ 
-					$(this).css({color:textColor2});
+					$(this).css({color:textColor3});
 				}
 			);
 		}
@@ -101,9 +103,10 @@ function update(n){
 	$('div.copyright').stop().animate({color:textColor3}, time);
 	
 	//content
-		$('<div class="cover_rect"/>').appendTo($('div#content')).animate({opacity:1}, time+500, 'linear', function(){
+		$('<div class="cover_rect"/>').css({backgroundColor:backgroundColor}).appendTo($('div#content')).animate({opacity:1}, time+500, 'linear', function(){
+//			$('div#content').css({backgroundColor:backgroundColor});
 			$('div#content>iframe').remove();
-			$('<iframe/>').attr('src', link).appendTo($('div#content'));
+			$('<iframe/>').css({backgroundColor:backgroundColor}).attr('src', link).appendTo($('div#content'));
 			$('div.cover_rect').animate({opacity:0}, time, 'linear', function(){ $(this).remove(); });
 		});
 	
@@ -155,6 +158,10 @@ function init(){
 
 $(document).ready(function(d){
 	
+	if(Math.random()<0.5){
+		$('div.tate-line').text( mottos[Math.floor(Math.random()*mottos.length)] );
+	}
+	
 	$.getJSON('index.json', 
 		function(data){
 			siteinfo = data;
@@ -173,6 +180,7 @@ $(document).ready(function(d){
 				n = siteinfo.length;
 			}
 			$.address.value( n );
+			
 		});
 })
 

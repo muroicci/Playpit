@@ -42,7 +42,7 @@
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0x222222, 1, 900);
+			scene.fog = new THREE.Fog( 0x201021, 1, 900);
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
@@ -101,7 +101,7 @@
 			
 			
 			//renderer
-			renderer = new THREE.WebGLRenderer( { clearColor:0x222222, clearAlpha: 1 } );
+			renderer = new THREE.WebGLRenderer( { clearColor:0x201021, clearAlpha: 1 } );
 			renderer.setSize( window.innerWidth, window.innerHeight);
 			renderer.sortObjects = true;
 			container.appendChild( renderer.domElement );

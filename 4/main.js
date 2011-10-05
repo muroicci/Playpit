@@ -39,7 +39,7 @@
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0x000000, 1, 900);
+			scene.fog = new THREE.Fog( 0x051519, 1, 900);
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
