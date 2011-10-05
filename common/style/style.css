@@ -27,6 +27,12 @@ a:hover{
 	text-decoration: none;
 }
 
+svg{
+	margin:0;
+	padding:0;
+}
+
+
 .textColor1	{ color:#ffffff }
 .textColor2	{ color:#666666 }
 .textColor3	{ color:#333333 }
@@ -61,7 +67,7 @@ div#content_info{
 
 nav{
 	padding: 30px 0px 22px 5px;
-	overflow: auto;
+	overflow: visible;
 }
 
 nav>ul{
@@ -70,20 +76,32 @@ nav>ul{
 
 nav>ul>li{
 	list-style: none;
-	display:block;
-	float:left;
 }
 
 nav>ul>li>a{
-	display:block;
+/*	display:block;*/
 }
 
-#next_prev_nav a{
+#next_prev_nav{
+	overflow: hidden;
+	height:17px;
+}
+
+#next_prev_nav li{
 	margin-right: 2px;
+	display:block;
+	float:left;
+	width:12px;
+	height:10px;
 }
 
 #content_menus{
-	
+	overflow: hidden;
+}
+
+#content_menus li{
+	display:block;
+	float:left;
 }
 
 

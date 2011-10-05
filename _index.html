@@ -3,14 +3,33 @@
 <head>
 	<meta charset="UTF-8">
 	<title>playpit</title>
+	<meta name="author" content="Eiji Muroichi" />
+	<meta name="copyright" content="Copyright (c) 2011 Eiji Muroichi, released under the MIT license" />
+	<meta name="Description" content="Particle experiments." />
+	<meta name="Keywords" content="Particles, Generative Graphics, Kowareru, HTML5, WebGL, Canvas, Flash" />
 	<link rel="stylesheet" href="common/style/reset.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<link rel="stylesheet" href="common/style/font.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<link rel="stylesheet" href="common/style/tate-style.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<link rel="stylesheet" href="common/style/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<script src="/common/js/jquery-1.6.4.min.js" type="text/javascript" charset="utf-8"></script>
-	<script src="common/js/jquery.address-1.4.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="common/js/jquery.address-1.4/jquery.address-1.4.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="common/js/jquery.svg.package-1.4.4/jquery.svg.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="common/js/jquery.svg.package-1.4.4/jquery.svgdom.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="common/js/jquery.svg.package-1.4.4/jquery.svganim.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="common/js/jquery.color.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/index_main.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-26152211-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
 </head>
 <body>
 	<header>
@@ -19,8 +38,8 @@
 	<div id="content_info">
 		<nav>
 			<ul id="next_prev_nav">
-				<li><a href="#"><img src="common/images/arrow_prev.png" width="10" height="8" alt="Previous"></a></li>
-				<li><a href="#"><img src="common/images/arrow_next.png" width="10" height="8" alt="Next"></a></li>
+				<li id="prev_link"><a href="#"><img src="/common/images/prev_arrow.png" width="10" height="8" /></a></li>
+				<li id="next_link"><a href="#"><img src="/common/images/next_arrow.png" width="10" height="8" /></a></li>
 			</ul>
 			<ul id="content_menus">
 			</ul>

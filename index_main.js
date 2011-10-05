@@ -1,5 +1,5 @@
 
-var mottos = ['実験サイト','勉強サイト','自己満足サイト','砂場', '粒子遊び'];
+var mottos = ['実験サイト','勉強サイト','自己満足サイト','砂場', '粒子遊び', '生成芸術'];
 
 var siteinfo;
 var currentIndex;
@@ -36,23 +36,41 @@ function update(n){
 	$('header>h1>span:eq(3)').stop().animate({color:subColor2}, time);
 	$('header>h1>span:eq(4)').stop().animate({color:textColor3}, time);
 	
-	//next prev
 	var prevIdx = (currentIndex==0) ? siteinfo.length-1 : currentIndex-1;
 	var nextIdx = (currentIndex==siteinfo.length-1) ? 0 : currentIndex+1;
-	$('ul#next_prev_nav>li:eq(0)>a').unbind('click');
-	$('ul#next_prev_nav>li:eq(0)>a').click(function(){
-		if(currentIndex!=prevIdx){
-			$.address.value( String(prevIdx+1) );
-		}
+	//prev
+	var prevPath = $("#prev_arrow").svg('get').getElementById("prev_arrow_path");
+	$(prevPath).animate({svgFill:textColor3}, time);
+	
+	$('#prev_arrow').unbind()
+	.click(function(){
+		if(currentIndex!=prevIdx)	$.address.value( String(prevIdx+1) );
 		return false;
-	});
-	$('ul#next_prev_nav>li:eq(1)>a').unbind('click');
-	$('ul#next_prev_nav>li:eq(1)>a').click(function(){
-		if(currentIndex!=prevIdx){
-			$.address.value( String(nextIdx+1) );
+	}).hover(
+		function(){
+			$(prevPath).stop().animate({svgFill:siteinfo[prevIdx].themeColor}, 1);
+		},
+		function(){
+			$(prevPath).stop().animate({svgFill:textColor3});
 		}
+	)
+	
+	//next
+	var nextPath = $("#next_arrow").svg('get').getElementById("next_arrow_path");
+	$(nextPath).animate({svgFill:textColor3}, time);
+	$('#next_arrow').unbind()
+	.click(function(){
+		if(currentIndex!=nextIdx)	$.address.value( String(nextIdx+1) );
 		return false;
-	});
+	}).hover(
+			function(){
+				$(nextPath).stop().animate({svgFill:siteinfo[nextIdx].themeColor}, 1);
+			},
+			function(){
+				$(nextPath).stop().animate({svgFill:textColor3});
+			}
+		);
+	
 	
 	//heading number
 	$('section>h1').text(String(100+n+1).substr(1,2));
@@ -64,16 +82,17 @@ function update(n){
 	//menus
 	$.each( siteinfo, function(i, item){
 		var a =  $('ul#content_menus>li:eq('+i+')>a' );
+		a.unbind('mouseover', 'mouseout');
 		if(i==currentIndex){
 			a.animate({color:siteinfo[i].themeColor},time);
 			a.hover(
 				//mouseover
 				function(){ 
-					$(this).css({color:siteinfo[i].themeColor});
+					$(this).stop().animate({color:siteinfo[i].themeColor});
 				},
 				//mouseout
 				function(){ 
-					$(this).css({color:siteinfo[i].themeColor});
+					$(this).stop().animate({color:siteinfo[i].themeColor});
 				}
 			);
 		}else{
@@ -81,11 +100,11 @@ function update(n){
 			a.hover(
 				//mouseover
 				function(){ 
-					$(this).css({color:siteinfo[i].themeColor});
+					$(this).stop().animate({color:siteinfo[i].themeColor}, 1);
 				},
 				//mouseout
 				function(){ 
-					$(this).css({color:textColor3});
+					$(this).stop().animate({color:textColor3});
 				}
 			);
 		}
@@ -139,8 +158,6 @@ function init(){
 	$('<span>.</span><span>kowareru</span><br/>').appendTo($('header>h1'));
 	$('<span>.</span><span>com</span>').appendTo($('header>h1'));
 	
-	//next prev
-	
 	//menus
 	$.each( siteinfo, function(i, item){
 		var list = $('<li/>');
@@ -157,6 +174,17 @@ function init(){
 		list.appendTo($('#content_menus'));
 	})
 	
+	//jquery address
+	$.address.change(function(event){
+		var n = Number($.address.value().substr(1)) -1;
+		if(n==-1){
+			n = siteinfo.length-1;
+		}
+		if(currentIndex!=n) {
+			update( n );
+		}
+	})
+	
 }
 
 
@@ -166,23 +194,27 @@ $(document).ready(function(d){
 		$('div.tate-line').text( mottos[Math.floor(Math.random()*mottos.length)] );
 	}
 	
+	//prev
+	$('#prev_link>a').remove();
+	$('<div id="prev_arrow" />')
+	.width(12).height(10).css('cursor', 'pointer')
+	.svg().load('/common/images/prev_arrow.svg')
+	.appendTo($('#prev_link'));
+	
+	//next
+	$('#next_link>a').remove();
+	$('<div id="next_arrow" />')
+	.width(12).height(10).css('cursor', 'pointer')
+	.svg().load('/common/images/next_arrow.svg')
+	.appendTo($('#next_link'));
+
+
+
 	$.getJSON('index.json', 
 		function(data){
 			siteinfo = data;
 			init();
 			
-			$.address.init(function(event){
-			})
-
-			$.address.change(function(event){
-				var n = Number($.address.value().substr(1)) -1;
-				if(n==-1){
-					n = siteinfo.length-1;
-				}
-				if(currentIndex!=n) {
-					update( n );
-				}
-			})
 			
 			var n = Number($.address.value().substr(1) )-1;
 			if(n==-1){
@@ -192,6 +224,7 @@ $(document).ready(function(d){
 
 			
 		});
+
 })
 
 
