@@ -15,7 +15,6 @@ var text;
 
 function update(n){
 
-	console.log('update'+ n)
 	//info
 	currentIndex = n;
 	link = siteinfo[currentIndex].link;
@@ -27,9 +26,6 @@ function update(n){
 	subColor1 = siteinfo[currentIndex].subColor1;
 	subColor2 = siteinfo[currentIndex].subColor2;
 	text = siteinfo[currentIndex].text;
-	
-	//background
-	$('body').css({backgroundColor:backgroundColor})
 	
 	var time = 800;
 	
@@ -103,11 +99,19 @@ function update(n){
 	$('div.copyright').stop().animate({color:textColor3}, time);
 	
 	//content
-		$('<div class="cover_rect"/>').css({backgroundColor:backgroundColor}).appendTo($('div#content')).animate({opacity:1}, time+500, 'linear', function(){
-//			$('div#content').css({backgroundColor:backgroundColor});
+		$('<div class="cover_rect"/>')
+		.css({backgroundColor:backgroundColor})
+		.prependTo($('div#content'))
+		.animate({opacity:1}, time, function(){	
+			$('body').css({backgroundColor:backgroundColor});
 			$('div#content>iframe').remove();
-			$('<iframe/>').css({backgroundColor:backgroundColor}).attr('src', link).appendTo($('div#content'));
-			$('div.cover_rect').animate({opacity:0}, time, 'linear', function(){ $(this).remove(); });
+			$('<iframe/>').attr('src', link).appendTo($('div#content'));
+
+			$('iframe').load(function(){
+				$('div.cover_rect').delay(100).animate({opacity:0}, time, 'linear', function(){ $(this).remove(); });
+			})
+			
+			
 		});
 	
 	
@@ -171,15 +175,21 @@ $(document).ready(function(d){
 			})
 
 			$.address.change(function(event){
-				var n = Number($.address.value().substr(1) );
-				update( n-1 );
+				var n = Number($.address.value().substr(1)) -1;
+				if(n==-1){
+					n = siteinfo.length-1;
+				}
+				if(currentIndex!=n) {
+					update( n );
+				}
 			})
-
-			var n = Number($.address.value().substr(1) );
-			if(n==0){
-				n = siteinfo.length;
+			
+			var n = Number($.address.value().substr(1) )-1;
+			if(n==-1){
+				n = siteinfo.length-1;
 			}
-			$.address.value( n );
+			update(n);
+
 			
 		});
 })
