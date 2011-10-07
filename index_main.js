@@ -185,12 +185,12 @@ function init(){
 		}
 	})
 	
+	//update
 	var n = Number($.address.value().substr(1) )-1;
 	if(n==-1){
 		n = siteinfo.length-1;
 	}
 	update(n);
-
 	
 }
 
@@ -205,27 +205,29 @@ $(document).ready(function(d){
 		$('#prev_link>a').remove();
 		$('<div id="prev_arrow" />')
 		.width(12).height(10).css('cursor', 'pointer')
-		.appendTo($('#prev_link'));
+		.appendTo($('#prev_link'))
+		.svg().load('/common/images/prev_arrow.svg',{onLoad:function(){console.log('prev')}});
 
 		//next
 		$('#next_link>a').remove();
 		$('<div id="next_arrow" />')
 		.width(12).height(10).css('cursor', 'pointer')
-		.appendTo($('#next_link'));
+		.appendTo($('#next_link'))
+		.svg().load('/common/images/next_arrow.svg',{onLoad:function(){console.log('next')}});
 		
-		//load arrows then json.
-		$('#prev_arrow').svg().load('/common/images/prev_arrow.svg',{onLoad:function(){
-				$('#next_arrow').svg().load('/common/images/next_arrow.svg', {onLoad:function(){
-					$.getJSON('index.json', 
-						function(data){
-							siteinfo = data;
-							init();
-						});
-				}});
-		}});
-
-
+		//load json
+		$(window).load(function(){
+			console.log('load')
+			$.getJSON('index.json', 
+				function(data){
+					siteinfo = data;
+					init();
+					console.log('json')
+				});
+		});
 
 })
+
+
 
 

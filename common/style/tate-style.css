@@ -30,7 +30,7 @@ div.tate-line{
 	margin-left:0;
 	padding-bottom:0;
 /*	font-family:'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','Hiragino Kaku Gothic Pro W3' , 'ＭＳ ゴシック','MS Gothic' ,monospace;*/
-	font-family: "Hiragino Maru Gothic Pro", "ヒラギノ丸ゴ Pro W4";	
+	font-family: "Hiragino Maru Gothic Pro", "ヒラギノ丸ゴ Pro W4", 'メイリオ', Meiryo, sans-serif;	
 	word-wrap:break-word;
 	direction:ltr;
 }
