@@ -185,6 +185,13 @@ function init(){
 		}
 	})
 	
+	var n = Number($.address.value().substr(1) )-1;
+	if(n==-1){
+		n = siteinfo.length-1;
+	}
+	update(n);
+
+	
 }
 
 
@@ -193,37 +200,31 @@ $(document).ready(function(d){
 	if(Math.random()<0.5){
 		$('div.tate-line').text( mottos[Math.floor(Math.random()*mottos.length)] );
 	}
-	
-	//prev
-	$('#prev_link>a').remove();
-	$('<div id="prev_arrow" />')
-	.width(12).height(10).css('cursor', 'pointer')
-	.svg().load('/common/images/prev_arrow.svg')
-	.appendTo($('#prev_link'));
-	
-	//next
-	$('#next_link>a').remove();
-	$('<div id="next_arrow" />')
-	.width(12).height(10).css('cursor', 'pointer')
-	.svg().load('/common/images/next_arrow.svg')
-	.appendTo($('#next_link'));
+
+		//prev
+		$('#prev_link>a').remove();
+		$('<div id="prev_arrow" />')
+		.width(12).height(10).css('cursor', 'pointer')
+		.appendTo($('#prev_link'));
+
+		//next
+		$('#next_link>a').remove();
+		$('<div id="next_arrow" />')
+		.width(12).height(10).css('cursor', 'pointer')
+		.appendTo($('#next_link'));
+		
+		//load arrows then json.
+		$('#prev_arrow').svg().load('/common/images/prev_arrow.svg',{onLoad:function(){
+				$('#next_arrow').svg().load('/common/images/next_arrow.svg', {onLoad:function(){
+					$.getJSON('index.json', 
+						function(data){
+							siteinfo = data;
+							init();
+						});
+				}});
+		}});
 
 
-
-	$.getJSON('index.json', 
-		function(data){
-			siteinfo = data;
-			init();
-			
-			
-			var n = Number($.address.value().substr(1) )-1;
-			if(n==-1){
-				n = siteinfo.length-1;
-			}
-			update(n);
-
-			
-		});
 
 })
 
