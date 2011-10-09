@@ -3,19 +3,19 @@
 		var camera;
 		var scene;
 		var renderer;
-		
-		//for cube mapping
-		var cameraCube;
-		var sceneCube;
+
+		var target;
+		var cTarget;
 		
 		var particleGeometry;
 		var particles;
-		var particleMaterial;
+		var particleMaterials;
 
 		var lineGeometry;
 		var lineMaterial;
 		var line;
 		var lineColors = new Array();
+		var colors = [ 0xdd2f37, 0xe467a5, 0xda9930, 0x9bb252, 0x478cc9, 0x626874 ];
 
 		var pPos = new Array();
 		var oPos = new Array();
@@ -26,7 +26,10 @@
 		
 		var rotationSpeed = 0;
 		
-		var tVector = new THREE.Vector3(0,0,1);
+		var tVector = new THREE.Vector3(0,0,5);
+		var mrx = 0;
+		var mry = 0;
+		var speedMultiply = 1;
 		
 		var stageWidth = 500;
 		var stageHeight = 500;
@@ -36,9 +39,9 @@
 		var pi = Math.PI;
 		
 		var sphereR = 100;
-		var particleR = 8;
-		var particleNum = 300;
-		var strokeNum = 50;
+		var particleR = 32;
+		var particleNum = 100;
+		var strokeNum = 300;
 
 		function init(){
 
@@ -49,15 +52,18 @@
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera = new THREE.Camera( 75, window.innerWidth/window.innerHeight, 1, 10000);
 			camera.position.z = 400;
+			cTarget = new THREE.Object3D();
+			camera.target = cTarget;
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0x222222, 1, 800);
+			scene.fog = new THREE.Fog( 0xf0ece7, 1, 2000);
 			
+			//target
 			target = new THREE.Object3D();
-			camera.target = target;
+			target.addChild(cTarget);
 			
 			//Material
 			var texture = THREE.ImageUtils.loadTexture( "/7/textures/100px_circle.png");
@@ -98,17 +104,15 @@
 					oPos[i].push(pPos[i].clone());
 					lineGeometry.vertices.push( new THREE.Vertex(oPos[i][j]) );
 					
+					var lc = new THREE.Color( colors[i%colors.length] );
 					if(j>0){
-						//colors
-						var lc = new THREE.Color( 0xffffff );
-						lc.setHSV( 0.0, 0.0, (-0.47/strokeNum*j + 0.6)*1 );
 						lineColors.push( lc );
 						lineColors.push( lc );
 					}
-					
 				}
-				
 			}
+			
+			var spline = new THREE.Spline()
 			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
@@ -126,7 +130,6 @@
 			container.appendChild( renderer.domElement );
 			
 			//Post proceccing
-			//var vignettEffect = new THREE.ShaderPass( THREE.ShaderExtras( "vignette" ) );
 			
 			//event
 			document.addEventListener('mousemove', mouseMove);
@@ -145,13 +148,14 @@
 		
 		function mouseClick (e) {
 			for (var i = rvVectors.length - 1; i >= 0; i--){
-				rvVectors[i] += 5*Math.random()+5;
-				rvVectors[i] *= 1.2;
+				rvVectors[i] += 10*Math.random()+10;
+				rvVectors[i] *= 1.5;
 				if(rvVectors[i]<0) rvVectors[i]*= -1;
 			};
 			
-		//	rotationSpeed += 0.05*(2*Math.random()-1);
-			rotationSpeed += 0.12;
+			rotationSpeed += 0.05*(2*Math.random()-1);
+//			rotationSpeed += 0.12;
+			if(speedMultiply<30)	speedMultiply *= 3;
 			
 		}
 		
@@ -167,51 +171,76 @@
 			omx = mx;
 			omy = my;
 			mx = ev.clientX - window.innerWidth/2;
-			my = ev.clientY - window.innerWidth/2;
+			my = ev.clientY - window.innerHeight/2;
+			mrx = 0.008*(mx)*pi/180;
+			mry = 0.008*(my)*pi/180;
 		}
 		
 		function animate(){
 			requestAnimationFrame(animate);
 			
 			update();
-			render();
+			renderer.clear();
+			renderer.render( scene, camera );
 			stats.update();
 			
-		}
-		
-		function render(){
-			renderer.clear();
-		//	renderer.render( sceneCube, cameraCube );
-			renderer.render( scene, camera );
 		}
 		
 
 		var cnt = 0;
 
+//////////////////////////////	//////////////////////////////	//////////////////////////////	
+
+
 		function update(){
 			
-			var perlin = new ImprovedNoise();
-			
-			var speed = 1.00;
-			
-			var vertices = [];
-			
-			var refreshLine = (cnt++%3==0);
-			
+			//refresh line
+			var refreshLine = (cnt%2==0);
 			if(refreshLine){
 				scene.removeChild( line );
 				lineGeometry = new THREE.Geometry();
 			}
 			
-			
 			//target vector
-//			tVector.y += 0.001*mx*pi/180;
-//			tVector.x += 0.001*my*pi/180;
-			//target.position.addSelf( tVector );
-			target.position.x = mx;
-			target.position.y = my;
-			target.position.z -= 0;
+			tVector.normalize();
+			tVector = tVector.multiplyScalar(speedMultiply*10);
+			var tmtp = new THREE.Matrix4();
+			tmtp.setPosition( tVector );
+			var tmtrx = new THREE.Matrix4();
+			tmtrx.setRotationX( -mry );
+			var tmtry = new THREE.Matrix4();
+			tmtry.setRotationY( -mrx );
 			
+			var mm = tmtrx.multiplySelf(tmtp); 
+			mm= tmtry.multiplySelf(tmtrx);
+			tVector = mm.getPosition();
+ 			
+			target.position.addSelf( tVector );
+			speedMultiply += (1 - speedMultiply)*0.06;
+			
+			
+			//camera
+			var cvec = target.position.clone();
+			cvec.setLength(target.position.length()-800);
+			camera.position = cvec;
+			
+			var cmtx1 = new THREE.Matrix4();
+			cmtx1.setTranslation(0,0,200);
+			var cmtrx = new THREE.Matrix4();
+			cmtrx.setRotationX( Math.cos(cnt*pi/180) );
+			var cmtry = new THREE.Matrix4();
+			cmtry.setRotationY( Math.sin(cnt*pi/180) );
+			var cmtx2 = new THREE.Matrix4();
+			cmtx2.setPosition( target.position );
+			var mm = cmtrx.multiplySelf(cmtx1);
+			mm = cmtry.multiplySelf(cmtrx);
+			mm = cmtx2.multiplySelf(cmtry);
+			cTarget.position = mm.getPosition();
+			
+			//particles
+			var vertices = [];
+			var speed = 1.0;
+			var perlin = new ImprovedNoise();
 			
 			for(var i=0; i<particleNum; i++){
 				
@@ -236,7 +265,7 @@
 				for( var j=0; j<particleNum; j++){
 					if(i!=j){
 						var q = pVectors[j];
-						if( p.distanceTo(q) < 10*pi/180){
+						if( p.distanceTo(q) < 5*pi/180){
 							var vv = new THREE.Vector3();
 							vv = vv.sub(q, p);
 							vv.multiplyScalar( 0.0060 );
@@ -260,21 +289,14 @@
 				//matrix
 				//position
 				var mtx = new THREE.Matrix4();
-//				var ppp = ps2.addSelf( target.position );
 				mtx.setPosition( ps2 );
-//				mtx.translate( target.position );
-				
 				//rotation
 				var mtr = new THREE.Matrix4();
 				mtr.setRotationX( p.x );
 				var mtrr = new THREE.Matrix4();
 				mtrr.setRotationY( p.y );
 				
-				// var m = mtr.multiplySelf(mtrr);
-				// m = mtx.multiplySelf( mtr );
-				
-				var m = mtr.multiplySelf(mtx);
-				m = mtrr.multiplySelf( m );
+				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
 				
 				ptcl.position = m.getPosition();
 				ptcl.position.addSelf( target.position );

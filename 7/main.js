@@ -33,7 +33,7 @@
 		
 		var pi = Math.PI;
 		
-		var sphereR = 100;
+		var sphereR = 150;
 		var particleR = 8;
 		var particleNum = 300;
 		var strokeNum = 50;
@@ -52,7 +52,7 @@
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0x222222, 1, 800);
+			scene.fog = new THREE.Fog( 0x222222, 1, 1400);
 			
 			target = new THREE.Object3D();
 			camera.target = target;
@@ -164,14 +164,14 @@
 			omx = mx;
 			omy = my;
 			mx = ev.clientX - window.innerWidth/2;
-			my = ev.clientY - window.innerWidth/2;
+			my = ev.clientY - window.innerHeight/2;
 		}
 		
 		function animate(){
 			requestAnimationFrame(animate);
 			
-			camera.position.x += (mx/2+100 - camera.position.x) * 0.05;
-			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
+			camera.position.x += (mx*2 - camera.position.x) * 0.05;
+			camera.position.y += (my*2 - camera.position.y) * 0.05;
 			
 			update();
 			render();
