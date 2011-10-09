@@ -1,19 +1,11 @@
 		
-		var container;
-		var camera;
-		var scene;
-		var renderer;
-
-		var target;
-		var cTarget;
+		var container, camera, scene, renderer;
+		var target, cTarget;
+		var particleGeometry,	particles, particleMaterials;
 		
-		var particleGeometry;
-		var particles;
-		var particleMaterials;
+    var composerScene;
 
-		var lineGeometry;
-		var lineMaterial;
-		var line;
+		var lineGeometry, lineMaterial, line;
 		var lineColors = new Array();
 		var colors = [ 0xdd2f37, 0xe467a5, 0xda9930, 0x9bb252, 0x478cc9, 0x626874 ];
 
@@ -47,19 +39,63 @@
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 			
+			stageWidth = window.innerWidth;
+			stageHeight = window.innerHeight;
+			
 			//container
 			container = document.createElement('div');
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera( 75, window.innerWidth/window.innerHeight, 1, 10000);
+			cameraOrtho = new THREE.OrthoCamera(-stageWidth/2, stageWidth, stageHeight, -stageHeight, -10000, 10000);
+			camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 10000);
 			camera.position.z = 400;
 			cTarget = new THREE.Object3D();
 			camera.target = cTarget;
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0xf0ece7, 1, 2000);
+			scene.fog = new THREE.Fog( 0x000000, 1, 10000);
+			
+			sceneBG = new THREE.Scene();
+			var bgColor = new THREE.MeshBasicMaterial( {
+				color:0x000000
+			} );
+			var plane = new THREE.PlaneGeometry(1,1);
+			var quadBG = new THREE.Mesh(plane, bgColor );
+			quadBG.scale.set(stageWidth, stageHeight);
+			sceneBG.addChild(quadBG)
+			
+			//renderer
+			renderer = new THREE.WebGLRenderer( { antialias:false } );
+			renderer.setSize( stageWidth, stageHeight);
+			renderer.setClearColorHex(0x000000, 1);
+			renderer.autoClear = true;
+			renderer.sortObjects = true;
+			container.appendChild( renderer.domElement );
+			
+
+			
+			//for postprocessing
+			var shaderVignette = THREE.ShaderExtras[ "vignette" ];
+			var effectVignette = new THREE.ShaderPass( shaderVignette );
+			effectVignette.uniforms["offset"].value = 0.95;
+			effectVignette.uniforms["darkness"].value = 1.6;
+			effectVignette.renderToScreen = true;
+			
+			var renderBG = new THREE.RenderPass( sceneBG, cameraOrtho );
+			var renderModel = new THREE.RenderPass( scene, camera );
+			renderModel.clear = false;
+			
+			var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
+			var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
+			
+			composerScene = new THREE.EffectComposer( renderer,  renderTarget);
+			composerScene.addPass( renderModel );
+			composerScene.addPass( effectVignette );
+			
+			
+			
 			
 			//target
 			target = new THREE.Object3D();
@@ -112,8 +148,6 @@
 				}
 			}
 			
-			var spline = new THREE.Spline()
-			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
 			scene.addObject( particles );
@@ -123,13 +157,6 @@
 			line.colors = lineColors;
 			scene.addObject( line );
 			
-			//renderer
-			renderer = new THREE.WebGLRenderer( { antialias:true, autoClear:false } );
-			renderer.setSize( window.innerWidth, window.innerHeight);
-			renderer.sortObjects = true;
-			container.appendChild( renderer.domElement );
-			
-			//Post proceccing
 			
 			//event
 			document.addEventListener('mousemove', mouseMove);
@@ -137,10 +164,10 @@
 			window.addEventListener('resize', resize, false);
 			
 			//stats
-			 stats = new Stats();
-			 stats.domElement.style.position = 'absolute';
-			 stats.domElement.style.top = '0px';
-			 container.appendChild( stats.domElement );
+			 // stats = new Stats();
+			 // stats.domElement.style.position = 'absolute';
+			 // stats.domElement.style.top = '0px';
+			 // container.appendChild( stats.domElement );
 			
 			animate();
 			
@@ -180,9 +207,11 @@
 			requestAnimationFrame(animate);
 			
 			update();
+			
 			renderer.clear();
-			renderer.render( scene, camera );
-			stats.update();
+			composerScene.render(0.1);
+			
+			//stats.update();
 			
 		}
 		

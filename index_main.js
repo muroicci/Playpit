@@ -111,7 +111,7 @@ function update(n){
 	})
 	
 	//text
-	$('section>p').text(text).animate({color:textColor2}, time);
+	$('section>p').html(text).animate({color:textColor2}, time);
 	
 	//footer
 	$('div.tate-line').stop().animate({color:textColor2}, time);
