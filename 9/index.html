@@ -1,0 +1,381 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>first canvas</title>
+	<script src="/common/js/Three.js" type="text/javascript" ></script>
+	
+	<script src="/common/js/Detector.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/Stats.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/RequestAnimationFrame.js" type="text/javascript"></script>
+	<script src="/common/js/noise.js" type="text/javascript" charset="utf-8"></script>
+	
+	<script src="/common/js/gui/gui.full.js" type="text/javascript" charset="utf-8"></script>
+	
+	
+	<script src="/common/js/ShaderExtras.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/RenderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/ShaderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/TexturePass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/MaskPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/BloomPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/DotScreenPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/FilmPass.js" type="text/javascript" charset="utf-8"></script>
+	
+	
+	<style>
+	 body{
+		margin:0;
+		padding:0;
+		background-color:#ffffff;
+		overflow: hidden;	
+	}
+	</style>
+	<link rel="stylesheet" href="../common/js/gui/gui.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	
+</head>
+
+<body>
+	<script type="text/javascript">
+
+				var container, camera, scene, renderer;
+				var target, cTarget;
+				var particleGeometry,	particles, particleMaterials;
+
+		    var composerScene;
+
+				var lineGeometry, lineMaterial, line;
+				var lineColors = new Array();
+				var colors = [ 0xefb3bb, 0x96d7eb, 0xb4b4b4, 0x75a3b0, 0xa08189 ];
+
+				var particlePositions = new Array();
+				var oldPositions = new Array();
+				var vVectors = new Array();
+
+				var rotationSpeed = 0;
+
+				var tVector = new THREE.Vector3(5,0,0);
+				var mrx = 0;
+				var mry = 0;
+				var speedMultiply = 10.00;
+
+				var stageWidth = 500;
+				var stageHeight = 500;
+				var mx=0;
+				var my=0;
+
+				var pi = Math.PI;
+
+				var sphereR = 2000;
+				var particleR = 15;
+				var particleNum = 1500;
+				var strokeNum = 15;
+
+				function init(){
+
+					if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+					stageWidth = window.innerWidth;
+					stageHeight = window.innerHeight;
+
+					//container
+					container = document.createElement('div');
+					document.body.appendChild(container);
+
+					//camera
+					camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 10000);
+					camera.position.z = 400;
+					cTarget = new THREE.Object3D();
+					camera.target = cTarget;
+
+					//scene
+					scene = new THREE.Scene();
+					scene.fog = new THREE.Fog( 0xffffff, 1, sphereR);
+
+					sceneBG = new THREE.Scene();
+					var bgColor = new THREE.MeshBasicMaterial( {
+						color:0x000000
+					} );
+					var plane = new THREE.PlaneGeometry(1,1);
+					var quadBG = new THREE.Mesh(plane, bgColor );
+					quadBG.scale.set(stageWidth, stageHeight);
+					sceneBG.addChild(quadBG)
+
+					//renderer
+					renderer = new THREE.WebGLRenderer( { antialias:false } );
+					renderer.setSize( stageWidth, stageHeight);
+					renderer.setClearColorHex(0xffffff, 1);
+					renderer.autoClear = true;
+					renderer.sortObjects = true;
+					container.appendChild( renderer.domElement );
+
+
+
+					//for postprocessing
+					var shaderVignette = THREE.ShaderExtras[ "vignette" ];
+					var effectVignette = new THREE.ShaderPass( shaderVignette );
+					effectVignette.uniforms["offset"].value = 0.50;
+					effectVignette.uniforms["darkness"].value = 1.5;
+					effectVignette.renderToScreen = true;
+
+					var renderModel = new THREE.RenderPass( scene, camera );
+					renderModel.clear = false;
+
+					var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
+					var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
+
+					composerScene = new THREE.EffectComposer( renderer,  renderTarget);
+					composerScene.addPass( renderModel );
+					composerScene.addPass( effectVignette );
+
+
+
+
+					//target
+					target = new THREE.Object3D();
+					target.addChild(cTarget);
+
+					//Material
+					var texture = THREE.ImageUtils.loadTexture( "/9/textures/100px_circle.png");
+					particleMaterial = new THREE.ParticleBasicMaterial({
+						color:0xffffff,
+						map:texture,
+						depthTest:false,
+						size:particleR,
+						opacity:0.8,
+						transparent:true
+					});
+
+					lineMaterial = new THREE.LineBasicMaterial({
+							vertexColors:true,
+							color:0xffffff,
+							blending:THREE.AdditiveBlending,
+							opacity: 1.0,//0.1,
+							lineWidth:1
+						});
+
+					//create particles
+					particleGeometry = new THREE.Geometry();
+					lineGeometry = new THREE.Geometry();
+
+					for( var i=0; i<particleNum; i++){
+
+						//create vectors;
+						vVectors[i] = new THREE.Vector3( 0, 0, 0);
+						particlePositions[i] = new THREE.Vector3(sphereR*(Math.random()*2-1), -200, sphereR*(Math.random()*2-1));
+						particleGeometry.vertices.push( new THREE.Vertex(particlePositions[i]));
+
+						for( var j=0; j<strokeNum; j++){
+							oldPositions.push(new Array());
+							oldPositions[i].push(particlePositions[i].clone());
+							lineGeometry.vertices.push( new THREE.Vertex(oldPositions[i][j]) );
+
+							var lc = new THREE.Color( colors[i%colors.length] );
+							if(j>0){
+								lineColors.push( lc );
+								lineColors.push( lc );
+							}
+						}
+					}
+
+					particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
+					particles.sortParticles = true;
+					scene.addObject( particles );
+
+
+					line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
+					line.colors = lineColors;
+					scene.addObject( line );
+
+
+					//event
+					document.addEventListener('mousemove', mouseMove);
+					document.addEventListener('click', mouseClick);
+					window.addEventListener('resize', resize, false);
+
+					//stats
+					 // stats = new Stats();
+					 // stats.domElement.style.position = 'absolute';
+					 // stats.domElement.style.top = '0px';
+					 // container.appendChild( stats.domElement );
+
+					//gui
+					var valController = {
+						speedMultiply:speedMultiply
+					};
+					var valChange = function(){
+						speedMultiply = valController.speedMultiply;
+					}
+
+					gui = new GUI();
+					gui.add( valController, "speedMultiply", 0.0, 10.0, 0.2500 ).onChange( valChange );
+					gui.show();
+
+					animate();
+
+
+
+				}
+
+				var gui;
+				var noiseZ = 0;
+
+				function mouseClick (e) {
+					for (var i = rvVectors.length - 1; i >= 0; i--){
+						rvVectors[i] += 10*Math.random()+10;
+						rvVectors[i] *= 1.5;
+						if(rvVectors[i]<0) rvVectors[i]*= -1;
+					};
+
+					rotationSpeed += 0.05*(2*Math.random()-1);
+		//			rotationSpeed += 0.12;
+					if(speedMultiply<30)	speedMultiply *= 3;
+
+				}
+
+				function resize(){
+					stageWidth = window.innerWidth;
+					stageHeight = window.innerHeight;
+					camera.aspect =  stageWidth/stageHeight;
+					renderer.setSize(stageWidth, stageHeight)
+					camera.updateProjectionMatrix();
+				}
+
+				function mouseMove(ev){
+					omx = mx;
+					omy = my;
+					mx = ev.clientX - window.innerWidth/2;
+					my = ev.clientY - window.innerHeight/2;
+					mrx = 0.008*(mx)*pi/180;
+					mry = 0.008*(my)*pi/180;
+				}
+
+				function animate(){
+					requestAnimationFrame(animate);
+
+					update();
+
+					renderer.clear();
+					composerScene.render(0.1);
+
+					//stats.update();
+
+				}
+
+
+				var cnt = 0;
+				var t1=0, t2=0;
+
+		//////////////////////////////	//////////////////////////////	//////////////////////////////	
+
+
+				function update(){
+
+					//refresh line
+					var refreshLine = (cnt%2==0);
+					if(refreshLine){
+						scene.removeChild( line );
+						lineGeometry = new THREE.Geometry();
+					}
+
+					//target vector
+					tVector.normalize();
+					tVector = tVector.multiplyScalar(speedMultiply);
+					var tmtp = new THREE.Matrix4();
+					tmtp.setPosition( tVector );
+					
+					tVector = tmtp.getPosition();
+					 			
+					target.position.addSelf( tVector );
+//					speedMultiply += (1 - speedMultiply)*0.06;
+
+					//camera
+					var cvec = target.position.clone();
+					cvec.z -= sphereR*2/3;
+					camera.position = cvec;
+					
+					var cmtx1 = new THREE.Matrix4();
+					cmtx1.setTranslation(-0,0,200);
+					var cmtrx = new THREE.Matrix4();
+					cmtrx.setRotationX( Math.cos(cnt*pi/180) );
+					var cmtry = new THREE.Matrix4();
+					cmtry.setRotationY( Math.sin(cnt*pi/180) );
+					var cmtx2 = new THREE.Matrix4();
+					cmtx2.setPosition( target.position );
+					var mm = cmtrx.multiplySelf(cmtx1);
+					mm = cmtry.multiplySelf(cmtrx);
+					mm = cmtx2.multiplySelf(cmtry);
+					cTarget.position = mm.getPosition();
+
+					//particles
+					var vertices = [];
+					var speed = 1.0;
+					t1+=0.024;
+					t2+=0.008;
+
+					for(var i=0; i<particleNum; i++){
+
+						var ptcl = particleGeometry.vertices[i];
+						var ps = particlePositions[i];
+						var v = vVectors[i];
+
+						//noise
+						var resultX = fBm2d( t1+ps.x / stageWidth, t1+ps.y/stageHeight, 1);
+						var resultY = fBm2d( ps.x / stageWidth,  ps.y/stageHeight*1, 1);
+						var resultZ = fBm2d( t2+ps.x / stageWidth, t2+ps.y/stageHeight, 1);
+						v.x += resultX*1.5;
+						v.z += resultZ*1.5;
+						v.x += (0-v.x)/10;
+						v.z += (0-v.z)/10;
+						ps.addSelf(v);
+						ps.addSelf( tVector );
+						
+						ps.y = resultY*500-100;
+
+						//matrix
+						//position
+						var mtx = new THREE.Matrix4();
+						mtx.setPosition( ps );
+
+						ptcl.position = mtx.getPosition();
+
+						if(refreshLine){
+							oldPositions[i].unshift(ps.clone());
+							oldPositions[i].pop();
+
+							for( var j=0; j<strokeNum-1; j++){
+								vertices.push( new THREE.Vertex( oldPositions[i][j] ) );
+								vertices.push( new THREE.Vertex( oldPositions[i][j+1] ) );
+							}
+						}				
+						
+						// if(ps.x>sphereR) ps.x = -sphereR;
+						// if(ps.x<-sphereR) ps.x = sphereR;
+						// if(ps.z>sphereR) ps.z = -sphereR;
+						// if(ps.z<-sphereR) ps.z = sphereR;
+						
+					}
+
+
+
+
+					//draw lines
+					if(refreshLine){
+						lineGeometry.vertices = vertices;
+						lineGeometry.colors = lineColors;
+						line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
+						scene.addChild( line );
+					}
+
+					cnt++;
+
+
+
+				}
+
+				///////////////////////////////////////////
+
+		init();
+	</script>
+</body>
+</html>
