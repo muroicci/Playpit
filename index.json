@@ -95,7 +95,20 @@
 	"subColor1":"#dd2f37",
 	"subColor2":"#9bb252",
 	"text":"Move mouse to change direction. Click to explode and accelerate."
+},
+
+{
+	"link":"/9/index.html",
+	"backgroundColor":"#ffffff",
+	"textColor1":"#ffffff",
+	"textColor2":"#aaaaaa",
+	"textColor3":"#999999",
+	"themeColor":"#95d9ec",
+	"subColor1":"#efb3bb",
+	"subColor2":"#96d7eb",
+	"text":"Move mouse to change direction. Click to explode and accelerate."
 }
+
 
 
 ]

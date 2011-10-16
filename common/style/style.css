@@ -9,6 +9,7 @@ body{
 	padding:0;
 	background-color:#000000;
 	overflow: hidden;	
+	text-shadow:0 0 1px rgba(0,0,0,0.01)
 }
 
 
@@ -58,7 +59,7 @@ div#content_info{
 	position: fixed;
 	top:0px;
 	left:195px;
-	border-left: 1px solid rgba(255,255,255,0.2);
+/*	border-left: 1px solid rgba(255,255,255,0.2);*/
 	width:180px;
 	height:128px;
 	overflow: visible;
