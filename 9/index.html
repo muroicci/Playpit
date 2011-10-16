@@ -54,10 +54,10 @@
 
 				var rotationSpeed = 0;
 
-				var tVector = new THREE.Vector3(5,0,0);
+				var tVector = new THREE.Vector3(10,0,0);
 				var mrx = 0;
 				var mry = 0;
-				var speedMultiply = 10.00;
+				var speedMultiply = 1.00;
 
 				var stageWidth = 500;
 				var stageHeight = 500;
@@ -66,10 +66,13 @@
 
 				var pi = Math.PI;
 
-				var sphereR = 2000;
+				var areaLength = 1200;
 				var particleR = 15;
-				var particleNum = 1500;
-				var strokeNum = 15;
+				var particleNum = 1000;
+				var strokeNum = 30;
+				
+				//for depth of field
+				var rtTextureDepth, rtTextureColor, materialDepth
 
 				function init(){
 
@@ -83,51 +86,72 @@
 					document.body.appendChild(container);
 
 					//camera
-					camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 10000);
+					camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 1200);
 					camera.position.z = 400;
 					cTarget = new THREE.Object3D();
 					camera.target = cTarget;
 
 					//scene
 					scene = new THREE.Scene();
-					scene.fog = new THREE.Fog( 0xffffff, 1, sphereR);
+					scene.fog = new THREE.Fog( 0xffffff, 1, areaLength);
 
-					sceneBG = new THREE.Scene();
-					var bgColor = new THREE.MeshBasicMaterial( {
-						color:0x000000
-					} );
-					var plane = new THREE.PlaneGeometry(1,1);
-					var quadBG = new THREE.Mesh(plane, bgColor );
-					quadBG.scale.set(stageWidth, stageHeight);
-					sceneBG.addChild(quadBG)
 
 					//renderer
 					renderer = new THREE.WebGLRenderer( { antialias:false } );
 					renderer.setSize( stageWidth, stageHeight);
 					renderer.setClearColorHex(0xffffff, 1);
-					renderer.autoClear = true;
-					renderer.sortObjects = true;
+					renderer.autoClear = false;
+//					renderer.sortObjects = false	;
 					container.appendChild( renderer.domElement );
 
 
-
 					//for postprocessing
+					pScene = new THREE.Scene();
+					pCamera = new THREE.OrthoCamera( stageWidth / - 2, stageWidth / 2,  stageHeight / 2, stageHeight/ - 2, -10000, 10000 );
+					pCamera.position.z = 100;
+					material_depth = new THREE.MeshDepthMaterial();
+
+					//vignette
 					var shaderVignette = THREE.ShaderExtras[ "vignette" ];
 					var effectVignette = new THREE.ShaderPass( shaderVignette );
 					effectVignette.uniforms["offset"].value = 0.50;
 					effectVignette.uniforms["darkness"].value = 1.5;
 					effectVignette.renderToScreen = true;
+					
+					var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+					rtTextureColor = new THREE.WebGLRenderTarget( stageWidth, stageHeight, pars, true );
+					rtTextureDepth = new THREE.WebGLRenderTarget( stageWidth, stageHeight, pars, true );
+					
+					//bokeh
+					var shaderBokeh = THREE.ShaderExtras[ "bokeh" ];
+					var effectBokeh = new THREE.ShaderPass( shaderBokeh );
+					effectBokeh.uniforms[ "tColor" ].texture = rtTextureColor;
+					effectBokeh.uniforms[ "tDepth" ].texture = rtTextureDepth;
+					effectBokeh.uniforms["focus"].value = 1.1;
+					effectBokeh.uniforms[ "aspect" ].value = stageWidth / stageHeight;
+					
+					pMaterialBokeh = new THREE.MeshShaderMaterial( {
+
+						uniforms: effectBokeh.uniforms,
+						vertexShader: shaderBokeh.vertexShader,
+						fragmentShader: shaderBokeh.fragmentShader
+
+					} );
+
+					quad = new THREE.Mesh( new THREE.PlaneGeometry( window.innerWidth, window.innerHeight ), pMaterialBokeh );
+					quad.position.z = - 500;
+					pScene.addObject( quad );
+
+
+					
 
 					var renderModel = new THREE.RenderPass( scene, camera );
-					renderModel.clear = false;
-
 					var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
 					var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
 
 					composerScene = new THREE.EffectComposer( renderer,  renderTarget);
 					composerScene.addPass( renderModel );
 					composerScene.addPass( effectVignette );
-
 
 
 
@@ -140,9 +164,9 @@
 					particleMaterial = new THREE.ParticleBasicMaterial({
 						color:0xffffff,
 						map:texture,
-						depthTest:false,
+//						depthTest:true,
 						size:particleR,
-						opacity:0.8,
+//						opacity:0.8,
 						transparent:true
 					});
 
@@ -162,7 +186,7 @@
 
 						//create vectors;
 						vVectors[i] = new THREE.Vector3( 0, 0, 0);
-						particlePositions[i] = new THREE.Vector3(sphereR*(Math.random()*2-1), -200, sphereR*(Math.random()*2-1));
+						particlePositions[i] = new THREE.Vector3(areaLength*(Math.random()*2-1), -200, areaLength*(Math.random()*2-1));
 						particleGeometry.vertices.push( new THREE.Vertex(particlePositions[i]));
 
 						for( var j=0; j<strokeNum; j++){
@@ -193,44 +217,15 @@
 					document.addEventListener('click', mouseClick);
 					window.addEventListener('resize', resize, false);
 
-					//stats
-					 // stats = new Stats();
-					 // stats.domElement.style.position = 'absolute';
-					 // stats.domElement.style.top = '0px';
-					 // container.appendChild( stats.domElement );
-
-					//gui
-					var valController = {
-						speedMultiply:speedMultiply
-					};
-					var valChange = function(){
-						speedMultiply = valController.speedMultiply;
-					}
-
-					gui = new GUI();
-					gui.add( valController, "speedMultiply", 0.0, 10.0, 0.2500 ).onChange( valChange );
-					gui.show();
-
 					animate();
 
 
 
 				}
 
-				var gui;
-				var noiseZ = 0;
 
 				function mouseClick (e) {
-					for (var i = rvVectors.length - 1; i >= 0; i--){
-						rvVectors[i] += 10*Math.random()+10;
-						rvVectors[i] *= 1.5;
-						if(rvVectors[i]<0) rvVectors[i]*= -1;
-					};
-
-					rotationSpeed += 0.05*(2*Math.random()-1);
-		//			rotationSpeed += 0.12;
-					if(speedMultiply<30)	speedMultiply *= 3;
-
+					if(speedMultiply<10)	speedMultiply *= 1.5;
 				}
 
 				function resize(){
@@ -256,9 +251,18 @@
 					update();
 
 					renderer.clear();
-					composerScene.render(0.1);
+					
+					//color
+					// scene.overrideMaterial = null;
+					// renderer.render( scene, camera, rtTextureColor, true);
+					// //depth
+					// scene.overrideMaterial = material_depth;
+					// renderer.render( scene, camera, rtTextureDepth, true);
+					// renderer.render( scene, camera);
+					
+					//compose
+					composerScene.render();
 
-					//stats.update();
 
 				}
 
@@ -279,19 +283,14 @@
 					}
 
 					//target vector
-					tVector.normalize();
-					tVector = tVector.multiplyScalar(speedMultiply);
-					var tmtp = new THREE.Matrix4();
-					tmtp.setPosition( tVector );
-					
-					tVector = tmtp.getPosition();
-					 			
-					target.position.addSelf( tVector );
-//					speedMultiply += (1 - speedMultiply)*0.06;
+					var svec = tVector.clone();
+					svec = svec.multiplyScalar(speedMultiply);
+					target.position.addSelf( svec );
+					speedMultiply += (1-speedMultiply)/(60+speedMultiply);
 
 					//camera
 					var cvec = target.position.clone();
-					cvec.z -= sphereR*2/3;
+					cvec.z -= 1000;
 					camera.position = cvec;
 					
 					var cmtx1 = new THREE.Matrix4();
@@ -321,16 +320,20 @@
 
 						//noise
 						var resultX = fBm2d( t1+ps.x / stageWidth, t1+ps.y/stageHeight, 1);
-						var resultY = fBm2d( ps.x / stageWidth,  ps.y/stageHeight*1, 1);
+						var resultY = fBm2d( ps.x / stageWidth,  ps.z/stageHeight*0.5, 1);
 						var resultZ = fBm2d( t2+ps.x / stageWidth, t2+ps.y/stageHeight, 1);
-						v.x += resultX*1.5;
-						v.z += resultZ*1.5;
+						v.x += resultX*1.5*speedMultiply;
+						v.y += resultY*1.5*speedMultiply;
+						v.z += resultZ*3.5*speedMultiply;
+						
 						v.x += (0-v.x)/10;
+						v.y += (0-v.y)/10;
 						v.z += (0-v.z)/10;
+						
 						ps.addSelf(v);
 						ps.addSelf( tVector );
 						
-						ps.y = resultY*500-100;
+						ps.y += (resultY*500-100 -ps.y)/20;
 
 						//matrix
 						//position
@@ -349,15 +352,33 @@
 							}
 						}				
 						
-						// if(ps.x>sphereR) ps.x = -sphereR;
-						// if(ps.x<-sphereR) ps.x = sphereR;
-						// if(ps.z>sphereR) ps.z = -sphereR;
-						// if(ps.z<-sphereR) ps.z = sphereR;
+						//wrapping point
+						if(ps.x>areaLength+target.position.x){ 
+							ps.x = -areaLength + Math.random()*100;
+							ps.z = (Math.random()*2-1)*areaLength;
+							ps.addSelf(target.position);
+							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
+						};
+						if(ps.x<-areaLength+target.position.x) {
+							ps.x = areaLength - Math.random()*100;
+							ps.z = (Math.random()*2-1)*areaLength;
+							ps.addSelf(target.position);
+							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
+						}
+						if(ps.z>areaLength+target.position.z){
+							ps.z = -areaLength + Math.random()*100;
+							ps.x = (Math.random()*2-1)*areaLength;
+							ps.addSelf(target.position);
+							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
+						} 
+						if(ps.z<-areaLength+target.position.z) {
+							ps.z = -areaLength - Math.random()*100;
+							ps.x = (Math.random()*2-1)*areaLength;
+							ps.addSelf(target.position);
+							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
+						}
 						
 					}
-
-
-
 
 					//draw lines
 					if(refreshLine){
