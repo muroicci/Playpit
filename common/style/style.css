@@ -98,6 +98,7 @@ nav>ul>li>a{
 
 #content_menus{
 	overflow: hidden;
+	font-family: Arial, sans-serif;
 }
 
 #content_menus li{
