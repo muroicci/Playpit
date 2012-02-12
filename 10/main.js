@@ -18,6 +18,8 @@
 		var particles2 = new Array();
 		var branchLength = new Array();
 		
+		var composerScene;
+		
 		var stageWidth = 500;
 		var stageHeight = 500;
 		var windowHalfX = stageWidth/2;
@@ -30,6 +32,8 @@
 		var sphereR = 150;
 		var particleR = 30;
 		var particleNum = 150;
+		
+		var colorTables = [0x0d3033, 0x317466, 0xb9d49e, 0xe8f196, 0xc7e947];
 
 		function init(){
 
@@ -53,24 +57,6 @@
 			camera.target = target;
 
 			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
-			material = new THREE.MeshBasicMaterial({
-				color:0x0d3033,
-			//	map:texture,
-				depthTest:true,
-				blending:THREE.MultiplyBlending,
-				//transparent:true,
-				opacity:1
-			});
-			
-			materialBranch = new THREE.MeshBasicMaterial({
-				color:0x317466,
-			//	map:texture,
-				depthTest:true,
-				blending:THREE.MultiplyBlending,
-				//transparent:true,
-				opacity:1
-			});
-			
 			
 			lineMat = new THREE.LineBasicMaterial(	{	
 				color:0xb9d49e,
@@ -94,7 +80,15 @@
 				pPos[i][0].z = sphereR*Math.cos(pVectors[i].y);
 				
 				//create particles
-				geometry = new THREE.CubeGeometry(pr, pr,0);
+				geometry = new THREE.CylinderGeometry(16, pr/2, pr/2,0);
+				var material = new THREE.MeshBasicMaterial({
+					color:colorTables[ Math.floor(Math.random()*colorTables.length)],
+				//	map:texture,
+					depthTest:true,
+					blending:THREE.AdditiveAlphaBlending,
+					//transparent:true,
+					opacity:1
+				});
 				var mesh = new THREE.Mesh(geometry, material);
 				mesh.matrixAutoUpdate = false;
 				//mesh.doubleSided = true;
@@ -129,7 +123,15 @@
 						previous = bvec;
 						vertices.push( new THREE.Vertex(bvec));
 						
-						geometry = new THREE.CubeGeometry(pr/(j+2),pr/(j+2),0);
+						geometry = new THREE.CylinderGeometry(16, pr/(j+2)/2, pr/(j+2)/2,0);
+						var materialBranch = new THREE.MeshBasicMaterial({
+							color:colorTables[ Math.floor(Math.random()*colorTables.length)],
+						//	map:texture,
+							depthTest:true,
+							blending:THREE.AdditiveAlphaBlending,
+							//transparent:true,
+							opacity:1
+						});
 						mesh = new THREE.Mesh(geometry, materialBranch);
 						//mesh.doubleSided = true;
 						mesh.matrixAutoUpdate = false;
@@ -186,10 +188,12 @@
 			
 			
 			//renderer
+
 			renderer = new THREE.WebGLRenderer( { clearColor:0xffffff, clearAlpha: 1 } );
 			renderer.setSize( window.innerWidth, window.innerHeight);
 			renderer.sortObjects = true;
 			container.appendChild( renderer.domElement );
+
 			
 			
 			//event

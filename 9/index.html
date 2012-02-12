@@ -143,8 +143,6 @@
 					pScene.addObject( quad );
 
 
-					
-
 					var renderModel = new THREE.RenderPass( scene, camera );
 					var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
 					var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
