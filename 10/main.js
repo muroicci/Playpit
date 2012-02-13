@@ -15,25 +15,23 @@
 		var lines = new Array();
 		var lineMat;
 		
-		var particles2 = new Array();
-		var branchLength = new Array();
-		
 		var composerScene;
 		
-		var stageWidth = 500;
-		var stageHeight = 500;
-		var windowHalfX = stageWidth/2;
-		var windowHalfY = stageHeight/2;
 		var mx=0;
 		var my=0;
 		
 		var pi = Math.PI;
 		
-		var sphereR = 150;
-		var particleR = 30;
+		var sphereR = 1500;
+		var particleR = 200;
 		var particleNum = 150;
 		
 		var colorTables = [0x0d3033, 0x317466, 0xb9d49e, 0xe8f196, 0xc7e947];
+		
+		var composerScene;
+		var rtTextureDepth, rtTextureColor, shaderBokeh, effectBokeh;
+		var pScene, pCamera, pMaterialBokeh, materialDepth;
+    
 
 		function init(){
 
@@ -45,15 +43,15 @@
 			
 			//camera
 			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
-			camera.position.z = 300;
+			camera.position.z = 3500;
 			
 			//scene
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0xffffff, 1, 900);
+			scene.fog = new THREE.Fog( 0xffffff, 1, 9000);
+			scene.matrixAutoUpdate = false;
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
-		 	//target.position.y = 50;
 			camera.target = target;
 
 			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
@@ -80,18 +78,13 @@
 				pPos[i][0].z = sphereR*Math.cos(pVectors[i].y);
 				
 				//create particles
-				geometry = new THREE.CylinderGeometry(16, pr/2, pr/2,0);
+				geometry = new THREE.CylinderGeometry(16, pr/2, pr/2, 0);
 				var material = new THREE.MeshBasicMaterial({
 					color:colorTables[ Math.floor(Math.random()*colorTables.length)],
-				//	map:texture,
-					depthTest:true,
-					blending:THREE.AdditiveAlphaBlending,
-					//transparent:true,
-					opacity:1
+					shading:THREE.FlatShading
 				});
 				var mesh = new THREE.Mesh(geometry, material);
 				mesh.matrixAutoUpdate = false;
-				//mesh.doubleSided = true;
 				mesh.position = pPos[i][0];
 				mesh.lookAt(group.position);
 				mesh.updateMatrix();
@@ -117,23 +110,18 @@
 						var mtx = new THREE.Matrix4();
 						mtx.setRotationAxis(new THREE.Vector3(Math.random(),Math.random(),Math.random()), 30/(j+1)*pi/180);
 						mtx.multiplyVector3(bvec);
-						var mult = 50*(j+1) - 15*j;
+						var mult = 300*(j+1) - 15*j;
 						bvec.multiplySelf(new THREE.Vector3(mult,mult,mult));
 						pPos[i].push( bvec );
 						previous = bvec;
 						vertices.push( new THREE.Vertex(bvec));
 						
-						geometry = new THREE.CylinderGeometry(16, pr/(j+2)/2, pr/(j+2)/2,0);
-						var materialBranch = new THREE.MeshBasicMaterial({
+						geometry = new THREE.CylinderGeometry(16, pr/(j+2)/2, pr/(j+2)/2, 0);
+						material = new THREE.MeshBasicMaterial({
 							color:colorTables[ Math.floor(Math.random()*colorTables.length)],
-						//	map:texture,
-							depthTest:true,
-							blending:THREE.AdditiveAlphaBlending,
-							//transparent:true,
-							opacity:1
+							shading:THREE.FlatShading
 						});
-						mesh = new THREE.Mesh(geometry, materialBranch);
-						//mesh.doubleSided = true;
+						mesh = new THREE.Mesh(geometry, material);
 						mesh.matrixAutoUpdate = false;
 						mesh.position = bvec;
 						mesh.lookAt( previous );
@@ -151,49 +139,90 @@
 				}
 				
 			}
-			
-			//line
-			/*
-			lineGeometry.vertices.push(new THREE.Vertex(pPos[i]));
-			var vertices = new Array();
-			
-			for(i=0; i<particleNum; i++){
-				var subL = particles[i].length;
-				for(j=1;j<subL;j++){
-					var vtx0 = new THREE.Vertex(pPos[i][j-1].clone());
-					vtx0.position.addSelf(pPos[i][0]);
-					var vtx1 = new THREE.Vertex(pPos[i][j].clone());
-					vtx1.position.addSelf(pPos[i][0]);
-					vertices.push( vtx0 );
-					vertices.push( vtx1 );
-				}
-			}
-			
-			//draw lines
-			lineGeometry.vertices = vertices;
-			line = new THREE.Line(lineGeometry, lineMat, THREE.LinePieces);
-			scene.addChild(line);
-			*/
-			
+
 			
 			//light
 			var light = new THREE.PointLight(0xffffff, 1);
-			light.position.x = -80;
+			light.position.x = -800;
 			light.position.y = 0;
-			light.position.z = 400;
+			light.position.z = 3000;
+		 	scene.addLight( light );
 			
-			scene.addLight( light );
 			scene.addObject( group );
 			scene.addObject( target );
 			
 			
 			//renderer
 
-			renderer = new THREE.WebGLRenderer( { clearColor:0xffffff, clearAlpha: 1 } );
+			renderer = new THREE.WebGLRenderer( );
 			renderer.setSize( window.innerWidth, window.innerHeight);
+			renderer.setClearColorHex(0xffffff);
+			renderer.clearAlpha = 1;
+			renderer.autoClear = false;
 			renderer.sortObjects = true;
 			container.appendChild( renderer.domElement );
 
+			//Postprocessing
+			pScene = new THREE.Scene();
+			pCamera = new THREE.OrthoCamera(-window.innerWidth/2, window.innerWidth/2, window.innerHeight/2, -window.innerHeight/2, -10000, 10000);
+			pCamera.position.z = 100;
+			
+			//bokeh
+			materialDepth = new THREE.MeshDepthMaterial()
+			var pars = { minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format: THREE.RGBFormat };
+			rtTextureColor = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars, true );
+			rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars, true );
+			shaderBokeh = THREE.ShaderExtras["bokeh"];
+			effectBokeh = new THREE.ShaderPass( shaderBokeh );
+			effectBokeh.uniforms["tColor"].texture = rtTextureColor;
+			effectBokeh.uniforms["tDepth"].texture = rtTextureDepth;
+			effectBokeh.uniforms["focus"].value = 0.90;
+			effectBokeh.uniforms["aperture"].value = 0.05;
+			effectBokeh.uniforms["maxblur"].value = 1;
+			effectBokeh.uniforms["aspect"].value = window.innerWidth/window.innerHeight;
+			pMaterialBokeh = new THREE.MeshShaderMaterial({
+				uniforms: effectBokeh.uniforms,
+				vertexShader: shaderBokeh.vertexShader,
+				fragmentShader: shaderBokeh.fragmentShader
+			});
+			
+			quad = new THREE.Mesh( new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh );
+			quad.position.z = -500;
+		 	pScene.addObject(quad);
+			
+			//vignette
+			var shaderVignette = THREE.ShaderExtras["vignette"];
+			var effectVignette = new THREE.ShaderPass(shaderVignette);
+			effectVignette.uniforms["offset"].value = 0.3;
+			effectVignette.uniforms["darkness"].value = 2.5;
+			effectVignette.renderToScreen = true;
+			
+			//render pass			
+			var renderModel = new THREE.RenderPass( pScene, pCamera );
+			var renderTargetParameter = { minFilter:THREE.LinearFilter, magFilter: THREE. LinearFilter, format:THREE.RGBFormat, stencilBuffer:true, depthBuffer:true };
+			var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
+			
+			composerScene = new THREE.EffectComposer(renderer, renderTarget);
+			composerScene.addPass( renderModel );
+			composerScene.addPass( effectVignette );
+			
+			
+			//debug
+			// var effectController = {
+			// 	focus: 1.0,
+			// 	aperture: 0.025,
+			// 	maxblur: 1.0
+			// };
+			// 
+			// var matChanger = function(){
+			// 	effectBokeh.uniforms["focus"].value = effectController.focus;
+			// 	effectBokeh.uniforms["aperture"].value = effectController.aperture;
+			// 	effectBokeh.uniforms["maxblur"].value = effectController.maxblur;
+			// }
+			// var gui = new GUI();
+			// gui.add( effectController, "focus", 0.0, 3.0, 0.025).onChange(matChanger);
+			// gui.add( effectController, "aperture", 0.001, 0.2, 0.001).onChange(matChanger);
+			// gui.add( effectController, "maxblur", 0.0, 20.0, 0.025).onChange(matChanger);
 			
 			
 			//event
@@ -204,16 +233,15 @@
 			stats = new Stats();
 			stats.domElement.style.position = 'absolute';
 			stats.domElement.style.top = '0px';
-			//container.appendChild( stats.domElement );
-			
+		
 			resize();
 			animate();
 			
 		}
 		
 		function resize(){
-			stageWidth = window.innerWidth;
-			stageHeight = window.innerHeight;
+			var stageWidth = window.innerWidth;
+			var stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
 			camera.updateProjectionMatrix();
@@ -222,21 +250,28 @@
 		function mouseMove(ev){
 			omx = mx;
 			omy = my;
-			mx = ev.clientX - windowHalfX;
-			my = ev.clientY - windowHalfY;
+			mx = ev.clientX - window.innerWidth/2;
+			my = ev.clientY - window.innerHeight/2;
 		}
 		
 		function animate(){
 			requestAnimationFrame(animate);
 			update();
 			render();
-//			stats.update();
 		}
 		
 		function render(){
-			camera.position.x += ((stageWidth/2-mx)/2+100 - camera.position.x) * 0.05;
-			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
-			renderer.render( scene, camera );
+			renderer.clear();
+					
+			scene.overrideMaterial = null;
+			renderer.render( scene, camera, rtTextureColor, true);
+			
+			scene.overrideMaterial = materialDepth;
+			renderer.render( scene, camera, rtTextureDepth, true );
+			
+			//renderer.render( pScene, pCamera );
+			
+			composerScene.render();
 		}
 		
 
@@ -257,8 +292,8 @@
 				
 				//noise
 				var result = fBm2d( p.x/2 + ofx, p.y/2, 10);
-				var dx = (result)*0.000300
-				var dy = (result)*0.000300
+				var dx = (result)*0.000175
+				var dy = (result)*0.000175
 				v.x += dx;
 				v.y += dy;
 				
@@ -274,7 +309,6 @@
 
 			}
 			
-			/*
 			//calc collision
 			for(i=0;i<particleNum;i++){
 				
@@ -375,7 +409,6 @@
 				
 				
 			}
-			*/
 			
 			//set prop
 			var vertices = new Array();
@@ -397,51 +430,30 @@
 				mesh.updateMatrix();
 				
 				//for branch
-				
 				subL = pPos[i].length;
 				var previous = pPos[i][0];
 				
 					for(j=1; j<subL; j++){
 						var mesh2 = particles[i][j];
 						var pps = pPos[i][j];
-						
 						mesh2.position = pps;
-					//	mesh2.lookAt(camera.position);
 						mesh2.updateMatrix();
 						previous = pps;
 					}
 				
 				
-				//lines
-				/*
-				for(j=i+1; j<particleNum; j++){
-					var dist = pPos[j][0].distanceTo(ps);
-					if(dist<50) {
-						vertices.push( new THREE.Vertex(ps.clone()));
-						vertices.push( new THREE.Vertex(pPos[j][0].clone()));
-					}
-				}
-				*/
+
 				
 			}
 			
-			/*
-			//line vertexes for branches
-			for(i=0; i<particleNum; i++){
-				subL = particles[i].length;
-				for(j=1;j<subL;j++){
-					vertices.push( new THREE.Vertex(pPos[i][j-1].clone()));
-					vertices.push( new THREE.Vertex(pPos[i][j].clone()));
-				}
-			}
+
+			//camera movement
+			group.rotation.x += -my*0.00005;
+			group.rotation.y += -mx*0.00005;
+			camera.position.x += (-mx*5 - camera.position.x) * 0.05;
+			camera.position.y += (my*5 - camera.position.y) * 0.05;
 			
-			//draw lines
-			scene.removeChild(line);
-			lineGeometry = new THREE.Geometry();
-			lineGeometry.vertices = vertices;
-			line = new THREE.Line(lineGeometry, lineMat, THREE.LinePieces)
-			scene.addChild(line);
-			*/
+			
 			
 		}
 		
