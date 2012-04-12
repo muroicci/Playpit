@@ -206,7 +206,6 @@ function createHeavyObj(chr){
 }
 
 
-
 function animate(){
 	requestAnimationFrame(animate);
 	update();
