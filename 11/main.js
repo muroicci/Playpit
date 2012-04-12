@@ -46,7 +46,7 @@ function init(){
 	camera.target = cameraTarget;
 
 	//light
-    var ambient = new THREE.AmbientLight( 0x333333 );
+    var ambient = new THREE.AmbientLight( 0x666666 );
     scene.addLight( ambient );
 
 	var light = new THREE.SpotLight( 0xffffff, 1);
@@ -102,7 +102,7 @@ function createScene(){
 	
 	//ground
 	var geometry = new THREE.PlaneGeometry(10000,10000);
-	var planeMaterial = new THREE.MeshBasicMaterial( {color:0xeeeeee });
+	var planeMaterial = new THREE.MeshBasicMaterial( {color:0xdddddd });
 	var ground = new THREE.Mesh( geometry, planeMaterial );
 	//ground.castShadow = true;
 	ground.receiveShadow = true;
@@ -140,10 +140,10 @@ function createScene(){
 
 	//sphere
 	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
-	for (var i = 0; i < 150; i++) {
+	for (var i = 0; i < 100; i++) {
 
 		var sphereR = Math.random()*6+3;
-		var sphereGeometry = new THREE.SphereGeometry(sphereR,8,6);
+		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
 		var sphereShape = new CANNON.Sphere(sphereR);
 
 		var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial);
@@ -155,7 +155,7 @@ function createScene(){
 		//Physics
 		var randX = (Math.random()*2-1)*10;
 		var randZ = (Math.random()*2-1)*10;
-		var sphereBody = new CANNON.RigidBody(0.45,sphereShape);
+		var sphereBody = new CANNON.RigidBody(0.40,sphereShape);
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
@@ -174,31 +174,35 @@ function createScene(){
 }
 
 
-var compoundShape;
-var heavyObjBody;
-var heavyObjMesh;
+// var compoundShape;
+var heavyObjBodies =[];
+var heavyObjMeshes = [];
 
 function createHeavyObj(chr){
 
-	group.removeChild(heavyObjMesh);
-	world.remove(heavyObjBody);
+	if(heavyObjBodies.length>4){
+		group.removeChild(heavyObjMeshes.shift());
+		world.remove(heavyObjBodies.shift());
+	}
 
-	var r = 20+Math.random()*10;
-	compoundShape = new CANNON.Compound();
+	var r = 10+Math.random()*20;
+	//compoundShape = new CANNON.Compound();
 	var sphereShape = new CANNON.Sphere(r);
-	compoundShape.addChild(sphereShape, new CANNON.Vec3(0,0,0));
-	heavyObjBody = new CANNON.RigidBody(100, compoundShape);
+	//compoundShape.addChild(sphereShape, new CANNON.Vec3(0,0,0));
+	var heavyObjBody = new CANNON.RigidBody(75, sphereShape);
 	heavyObjBody.setPosition(50*(2*Math.random()-1),r/2+600,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
+	heavyObjBodies.push(heavyObjBody);
 
 	//visual
 	var sphereGeometry = new THREE.SphereGeometry( r, 16, 16);
 	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xff8d28});
-	heavyObjMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
+	var heavyObjMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
 	heavyObjMesh.useQuaternion = true;
 	group.addChild(heavyObjMesh);
+	heavyObjMeshes.push(heavyObjMesh);
 }
 
 
@@ -214,11 +218,10 @@ var cr = 0;
 function update(){
 
 	//camera
-	cr += mousex*0.00005;
+	cr += mousex*0.000025;
 	camera.position.y += ( -mousey/5 + 100 - camera.position.y)*0.02;
 	camera.position.x = 200*Math.cos(cr);
 	camera.position.z = 200*Math.sin(cr);
-	camera.lookAt(heavyObjMesh.position)
 
 	
 	//Physics
@@ -232,8 +235,10 @@ function update(){
 		};
 
 		//heavyObj
-		heavyObjBody.getPosition( heavyObjMesh.position );
-		heavyObjBody.getOrientation( heavyObjMesh.quaternion );
+		for (var i = heavyObjBodies.length - 1; i >= 0; i--) {
+			heavyObjBodies[i].getPosition( heavyObjMeshes[i].position );
+			heavyObjBodies[i].getOrientation( heavyObjMeshes[i].quaternion );
+		};
 
 
 	};
