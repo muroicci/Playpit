@@ -12,8 +12,15 @@ var world, bp;
 var phys_bodies =[];
 var phys_visuals =[];
 
-var SHADOW_MAP_WIDTH = 1024;
-var SHADOW_MAP_HEIGHT = 1024;
+var SHADOW_MAP_WIDTH = 1024*2;
+var SHADOW_MAP_HEIGHT = 1024*2;
+
+var effect;
+var resolution = 28;
+var numBlobs = 100;
+
+var stats;
+var composer;
 
 
 function init(){
@@ -28,36 +35,37 @@ function init(){
 	var height = window.innerHeight;
 
 	//scene
-	scene = new THREE.Scene();
+	scene     = new THREE.Scene();
 	scene.fog = new THREE.Fog( 0xffffff, 1, 1000);
 
 	//group
 	group = new THREE.Object3D();
-	scene.addChild( group );
+	scene.add( group );
 
 	//camera
-	camera = new THREE.Camera( 40, width/height, 1, 1000 );
+	camera = new THREE.PerspectiveCamera( 40, width/height, 100, 10000 );
 	camera.position.x = 0;
 	camera.position.y = 400;
 	camera.position.z = -400;
 
 	cameraTarget = new THREE.Object3D();
 	cameraTarget.position.y = 30;
-	camera.target = cameraTarget;
+	//camera.target = cameraTarget;
+
+	scene.add(cameraTarget);
+	scene.add(camera);
 
 	//light
-    var ambient = new THREE.AmbientLight( 0x666666 );
-    scene.addLight( ambient );
-
-	var light = new THREE.SpotLight( 0xffffff, 1);
-	light.shadowCameraVisible = true;
+ 	light = new THREE.DirectionalLight(0xffffff);
+	light.position.set(0,1000,0);
 	light.castShadow = true;
-	light.position.set (0,1000,0);
-	scene.addLight(light);
+	scene.add(light);
+
+	ambient = new THREE.AmbientLight(0x333333);
+	scene.add(ambient);
 
 	//renderer
-	renderer = new THREE.WebGLRenderer();
-	renderer.autoClear = false;
+	renderer = new THREE.WebGLRenderer( {clearColor:0xffffff, clearAlpha:1, alpha:false } );
 	renderer.setSize( width, height );
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapSoft = true;
@@ -65,16 +73,47 @@ function init(){
 	renderer.shadowMapDarkness = 0.2;
 	renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
 	renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
-	renderer.setClearColorHex(0xffffff, 1.0);
 	document.body.appendChild ( renderer.domElement );
 
-	
+	renderer.gammaInput = true;
+	renderer.gammaOutput = true;
+	renderer.physicallyBasedShading = true;
+
+	//stats
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	container.appendChild(stats.domElement);
+
+	//composer
+	renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+	renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, renderTargetParameters );
+	effectFXAA = new THREE.ShaderPass( THREE.ShaderExtras['fxaa'] );
+
+	hblur = new THREE.ShaderPass( THREE.ShaderExtras[ "horizontalTiltShift" ] );
+	vblur = new THREE.ShaderPass( THREE.ShaderExtras[ "verticalTiltShift" ] );
+
+	var bluriness = 8;
+	hblur.uniforms['h'].value = bluriness/width;
+	vblur.uniforms['v'].value = bluriness/height;
+	hblur.uniforms['r'].value = vblur.uniforms['r'].value = 0.5;
+
+	effectFXAA.uniforms['resolution'].value.set(1/width, 1/height);
+
+	composer = new THREE.EffectComposer( renderer, renderTarget );
+	var renderModel = new THREE.RenderPass( scene, camera );
+	composer.addPass( renderModel );
+	composer.addPass( effectFXAA );
+	composer.addPass( hblur );
+	composer.addPass( vblur );
+
+
 	//event
 	document.addEventListener('mousemove', mouseMove);
 	window.addEventListener('resize', resize, false);
 	document.addEventListener('click', createHeavyObj)
 
 	createScene();
+	createHeavyObj();
 	animate();
 
 }
@@ -85,62 +124,61 @@ function mouseMove(ev){
 }
 
 function resize(){
-	var stageWidth = window.innerWidth;
+	var stageWidth  = window.innerWidth;
 	var stageHeight = window.innerHeight;
-	camera.aspect =  stageWidth/stageHeight;
+	camera.aspect   = stageWidth/stageHeight;
 	renderer.setSize(stageWidth, stageHeight)
-	camera.updateProjectionMatrix();
+//	camera.updateProjectionMatrix();
 }
 
 function createScene(){
 
-	world = new CANNON.World();
+	world                = new CANNON.World();
 	world.gravity( new CANNON.Vec3(0,-250,0));
-	bp = new CANNON.NaiveBroadphase();
+	bp                   = new CANNON.NaiveBroadphase();
 	world.broadphase(bp);
 	world.iterations(2);
 	
 	//ground
-	var geometry = new THREE.PlaneGeometry(10000,10000);
-	var planeMaterial = new THREE.MeshBasicMaterial( {color:0xdddddd });
-	var ground = new THREE.Mesh( geometry, planeMaterial );
-	//ground.castShadow = true;
+	var geometry         = new THREE.PlaneGeometry(10000,10000);
+	var planeMaterial    = new THREE.MeshBasicMaterial( {color:0xdddddd });
+	var ground           = new THREE.Mesh( geometry, planeMaterial );
 	ground.receiveShadow = true;
-	ground.rotation.x = -Math.PI/2;
-	group.addChild( ground );
-
-	var groundShape = new CANNON.Plane( new CANNON.Vec3(0,1,0));
-	var groundBody = new CANNON.RigidBody( 0, groundShape );
+	//ground.rotation.x    = -Math.PI/2;
+	group.add( ground );
+	
+	var groundShape      = new CANNON.Plane( new CANNON.Vec3(0,1,0));
+	var groundBody       = new CANNON.RigidBody( 0, groundShape );
 	world.add(groundBody);
-
+	
 	// plane -x
-    var planeShapeXmin = new CANNON.Plane(new CANNON.Vec3(0,0,1));
-    var planeXmin = new CANNON.RigidBody(0, planeShapeXmin);
-    planeXmin.setPosition(0,0,-50);
-    world.add(planeXmin);
-
-    // Plane +x
-    var planeShapeXmax = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
-    var planeXmax = new CANNON.RigidBody(0, planeShapeXmax);
-    planeXmax.setPosition(0,0,50);
-    world.add(planeXmax);
-
-    // Plane -z
-    var planeShapeYmin = new CANNON.Plane(new CANNON.Vec3(1,0,0));
-    var planeYmin = new CANNON.RigidBody(0, planeShapeYmin);
-    planeYmin.setPosition(-50,0,0);
-    world.add(planeYmin);
-
-    // Plane +z
-    var planeShapeYmax = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
-    var planeYmax = new CANNON.RigidBody(0, planeShapeYmax);
-    planeYmax.setPosition(50,0,0);
-    world.add(planeYmax);
-
+	var planeShapeXmin   = new CANNON.Plane(new CANNON.Vec3(0,0,1));
+	var planeXmin        = new CANNON.RigidBody(0, planeShapeXmin);
+	planeXmin.setPosition(0,0,-50);
+	world.add(planeXmin);
+	
+	// Plane +x
+	var planeShapeXmax   = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
+	var planeXmax        = new CANNON.RigidBody(0, planeShapeXmax);
+	planeXmax.setPosition(0,0,50);
+	world.add(planeXmax);
+	
+	// Plane -z
+	var planeShapeYmin   = new CANNON.Plane(new CANNON.Vec3(1,0,0));
+	var planeYmin        = new CANNON.RigidBody(0, planeShapeYmin);
+	planeYmin.setPosition(-50,0,0);
+	world.add(planeYmin);
+	
+	// Plane +z
+	var planeShapeYmax   = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
+	var planeYmax        = new CANNON.RigidBody(0, planeShapeYmax);
+	planeYmax.setPosition(50,0,0);
+	world.add(planeYmax);
+	
 
 	//sphere
 	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
-	for (var i = 0; i < 100; i++) {
+	for (var i = 0; i < numBlobs; i++) {
 
 		var sphereR = Math.random()*6+3;
 		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
@@ -149,7 +187,7 @@ function createScene(){
 		var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial);
 		sphereMesh.castShadow = true;
 		sphereMesh.receiveShadow = true;
-		group.addChild( sphereMesh );
+		group.add( sphereMesh );
 		sphereMesh.useQuaternion = true;
 
 		//Physics
@@ -167,9 +205,12 @@ function createScene(){
 
 	}
 
-	createHeavyObj("A");
 
-
+	//Marching Cubes
+	effect = new THREE.MarchingCubes( resolution, sphereMaterial );
+	effect.position.set(0,0,0);
+	effect.scale.set(700,700,700);
+	// scene.add(effect);
 
 }
 
@@ -178,17 +219,15 @@ function createScene(){
 var heavyObjBodies =[];
 var heavyObjMeshes = [];
 
-function createHeavyObj(chr){
+function createHeavyObj(){
 
 	if(heavyObjBodies.length>4){
-		group.removeChild(heavyObjMeshes.shift());
+		group.remove(heavyObjMeshes.shift());
 		world.remove(heavyObjBodies.shift());
 	}
 
 	var r = 10+Math.random()*20;
-	//compoundShape = new CANNON.Compound();
 	var sphereShape = new CANNON.Sphere(r);
-	//compoundShape.addChild(sphereShape, new CANNON.Vec3(0,0,0));
 	var heavyObjBody = new CANNON.RigidBody(75, sphereShape);
 	heavyObjBody.setPosition(50*(2*Math.random()-1),r/2+600,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
@@ -201,10 +240,9 @@ function createHeavyObj(chr){
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
 	heavyObjMesh.useQuaternion = true;
-	group.addChild(heavyObjMesh);
+	group.add(heavyObjMesh);
 	heavyObjMeshes.push(heavyObjMesh);
 }
-
 
 function animate(){
 	requestAnimationFrame(animate);
@@ -221,7 +259,7 @@ function update(){
 	camera.position.y += ( -mousey/5 + 100 - camera.position.y)*0.02;
 	camera.position.x = 200*Math.cos(cr);
 	camera.position.z = 200*Math.sin(cr);
-
+	camera.lookAt(cameraTarget.position);
 	
 	//Physics
 	if (!world.paused) {
@@ -244,10 +282,17 @@ function update(){
 
 }
 
+var clock = new THREE.Clock();
+
 function render(){
 	renderer.clear();
 	renderer.render( scene, camera );
+	// var delta = clock.getDelta();
+	// composer.render(delta);
+	stats.update();
 }
+
+
 
 
 
