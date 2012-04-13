@@ -16,9 +16,7 @@ var SHADOW_MAP_WIDTH = 1024*2;
 var SHADOW_MAP_HEIGHT = 1024*2;
 
 var effect;
-// var isolation = 300;
-// var resolution = 40;
-var effectController;
+var resolution = 28;
 var numBlobs = 100;
 
 var stats;
@@ -38,7 +36,7 @@ function init(){
 
 	//scene
 	scene     = new THREE.Scene();
-	scene.fog = new THREE.Fog( 0xffffff, 400, 1000);
+	scene.fog = new THREE.Fog( 0xffffff, 1, 1000);
 
 	//group
 	group = new THREE.Object3D();
@@ -51,7 +49,7 @@ function init(){
 	camera.position.z = -400;
 
 	cameraTarget = new THREE.Object3D();
-	cameraTarget.position.y = 60;
+	cameraTarget.position.y = 30;
 	//camera.target = cameraTarget;
 
 	scene.add(cameraTarget);
@@ -59,7 +57,7 @@ function init(){
 
 	//light
  	light = new THREE.DirectionalLight(0xffffff);
-	light.position.set(100.0,100.0,100);
+	light.position.set(0,1000,0);
 	light.castShadow = true;
 	scene.add(light);
 
@@ -87,26 +85,26 @@ function init(){
 	container.appendChild(stats.domElement);
 
 	//composer
-	// renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
-	// renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, renderTargetParameters );
-	// effectFXAA = new THREE.ShaderPass( THREE.ShaderExtras['fxaa'] );
+	renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+	renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, renderTargetParameters );
+	effectFXAA = new THREE.ShaderPass( THREE.ShaderExtras['fxaa'] );
 
-	// hblur = new THREE.ShaderPass( THREE.ShaderExtras[ "horizontalTiltShift" ] );
-	// vblur = new THREE.ShaderPass( THREE.ShaderExtras[ "verticalTiltShift" ] );
+	hblur = new THREE.ShaderPass( THREE.ShaderExtras[ "horizontalTiltShift" ] );
+	vblur = new THREE.ShaderPass( THREE.ShaderExtras[ "verticalTiltShift" ] );
 
-	// var bluriness = 8;
-	// hblur.uniforms['h'].value = bluriness/width;
-	// vblur.uniforms['v'].value = bluriness/height;
-	// hblur.uniforms['r'].value = vblur.uniforms['r'].value = 0.5;
+	var bluriness = 8;
+	hblur.uniforms['h'].value = bluriness/width;
+	vblur.uniforms['v'].value = bluriness/height;
+	hblur.uniforms['r'].value = vblur.uniforms['r'].value = 0.5;
 
-	// effectFXAA.uniforms['resolution'].value.set(1/width, 1/height);
+	effectFXAA.uniforms['resolution'].value.set(1/width, 1/height);
 
-	// composer = new THREE.EffectComposer( renderer, renderTarget );
-	// var renderModel = new THREE.RenderPass( scene, camera );
-	// composer.addPass( renderModel );
-	// composer.addPass( effectFXAA );
-	// composer.addPass( hblur );
-	// composer.addPass( vblur );
+	composer = new THREE.EffectComposer( renderer, renderTarget );
+	var renderModel = new THREE.RenderPass( scene, camera );
+	composer.addPass( renderModel );
+	composer.addPass( effectFXAA );
+	composer.addPass( hblur );
+	composer.addPass( vblur );
 
 
 	//event
@@ -119,8 +117,6 @@ function init(){
 	animate();
 
 }
-
-
 
 function mouseMove(ev){
 	mousex = ev.clientX - window.innerWidth/2;
@@ -145,9 +141,10 @@ function createScene(){
 	
 	//ground
 	var geometry         = new THREE.PlaneGeometry(10000,10000);
-	var planeMaterial    = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
+	var planeMaterial    = new THREE.MeshBasicMaterial( {color:0xdddddd });
 	var ground           = new THREE.Mesh( geometry, planeMaterial );
 	ground.receiveShadow = true;
+	//ground.rotation.x    = -Math.PI/2;
 	group.add( ground );
 	
 	var groundShape      = new CANNON.Plane( new CANNON.Vec3(0,1,0));
@@ -180,24 +177,23 @@ function createScene(){
 	
 
 	//sphere
-//	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
-	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
+	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
 	for (var i = 0; i < numBlobs; i++) {
 
-		var sphereR = 3//Math.random()*6+3;
+		var sphereR = Math.random()*6+3;
 		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
 		var sphereShape = new CANNON.Sphere(sphereR);
 
 		var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial);
 		sphereMesh.castShadow = true;
 		sphereMesh.receiveShadow = true;
-		//group.add( sphereMesh );
+		group.add( sphereMesh );
 		sphereMesh.useQuaternion = true;
 
 		//Physics
 		var randX = (Math.random()*2-1)*10;
 		var randZ = (Math.random()*2-1)*10;
-		var sphereBody = new CANNON.RigidBody(0.30,sphereShape);
+		var sphereBody = new CANNON.RigidBody(0.40,sphereShape);
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
@@ -209,40 +205,14 @@ function createScene(){
 
 	}
 
-	setupGui();
 
 	//Marching Cubes
-	effect = new THREE.MarchingCubes( effectController.resolution, sphereMaterial );
-	effect.castShadow = true;
-	effect.receiveShadow = true;
-	effect.isolation = effectController.isolation;
-	effect.position.set(0,200,0);
-	effect.scale.set(200,200,200);
-	scene.add(effect);
-
-
+	effect = new THREE.MarchingCubes( resolution, sphereMaterial );
+	effect.position.set(0,0,0);
+	effect.scale.set(700,700,700);
+	// scene.add(effect);
 
 }
-
-
-function setupGui(){
-
-	gui = new DAT.GUI();
-
-	effectController = {
-		isolation: 900,
-		resolution: 28,
-		subtract: 35,
-		strength: 2.5
-	}
-
-	var is = gui.add(effectController, "isolation", 1, 1000, 1);
-	var rs = gui.add(effectController, "resolution", 1, 100, 1);
-	var sb = gui.add(effectController, "subtract", 1, 100, 1);
-	var st = gui.add(effectController, "strength", 1, 10, 0.1);
-
-}
-
 
 
 // var compoundShape;
@@ -256,17 +226,16 @@ function createHeavyObj(){
 		world.remove(heavyObjBodies.shift());
 	}
 
-	var r = 15+Math.random()*20;
+	var r = 10+Math.random()*20;
 	var sphereShape = new CANNON.Sphere(r);
-	var heavyObjBody = new CANNON.RigidBody(50, sphereShape);
+	var heavyObjBody = new CANNON.RigidBody(75, sphereShape);
 	heavyObjBody.setPosition(50*(2*Math.random()-1),r/2+600,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
 	heavyObjBodies.push(heavyObjBody);
 
 	//visual
 	var sphereGeometry = new THREE.SphereGeometry( r, 16, 16);
-	//var sphereMaterial = new THREE.MeshLambertMaterial({color:0xff8d28});
-	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xff8d28, specular: 0x111111, shininess: 1, perPixel: true } );
+	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xff8d28});
 	var heavyObjMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
@@ -281,39 +250,6 @@ function animate(){
 	render();
 }
 
-function updateCubes(){
-
-	effect.reset();
-
-	if (effectController.isolation!=effect.isolation) {
-		effect.isolation = effectController.isolation;
-	};
-
-	if(effect.resolution!=effectController.resolution){
-		effect.init (effectController.resolution);
-	}
-
-	var subtract = effectController.subtract;
-	var strength = effectController.strength / ( ( Math.sqrt( numBlobs ) - 1 ) / 4 + 1 );
-	var l = phys_bodies.length - 1;
-	for (var i = l; i >= 0; i--) {
-		var pos = phys_bodies[i].getPosition(phys_visuals[i].position);
-		var ort = phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
-		effect.addBall(pos.x/200+0.5, (pos.y+0)/200, pos.z/200+0.5, strength, subtract);
-		//effect.addBall(1., 10, 10, strength, subtract);
-	}
-	effect.addPlaneY( 2, effectController.subtract);
-
-		// var l = phys_bodies.length - 1;
-		// for (var i = l; i >= 0; i--) {
-		// 	if(phys_bodies[i].getPosition().y<-300) phys_bodies[i].setPosition(0,300,0);
-		// 	phys_bodies[i].getPosition(phys_visuals[i].position);
-		// 	phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
-		// };
-
-}
-
-
 var cr = 0;
 
 function update(){
@@ -321,16 +257,19 @@ function update(){
 	//camera
 	cr += mousex*0.000025;
 	camera.position.y += ( -mousey/5 + 100 - camera.position.y)*0.02;
-	camera.position.x = 300*Math.cos(cr);
-	camera.position.z = 300*Math.sin(cr);
+	camera.position.x = 200*Math.cos(cr);
+	camera.position.z = 200*Math.sin(cr);
 	camera.lookAt(cameraTarget.position);
 	
 	//Physics
 	if (!world.paused) {
 		world.step(1.0/60.0);
-
-		updateCubes();
-
+		var l = phys_bodies.length - 1;
+		for (var i = l; i >= 0; i--) {
+			if(phys_bodies[i].getPosition().y<-300) phys_bodies[i].setPosition(0,300,0);
+			phys_bodies[i].getPosition(phys_visuals[i].position);
+			phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
+		};
 
 		//heavyObj
 		for (var i = heavyObjBodies.length - 1; i >= 0; i--) {
