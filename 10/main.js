@@ -15,8 +15,6 @@ var radius = new Array();
 var lines = new Array();
 var lineMat;
 
-var composerScene;
-
 var mx=0;
 var my=0;
 
@@ -41,26 +39,27 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 container = document.createElement('div');
 document.body.appendChild(container);
 
-//camera
-camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
-camera.position.z = 3500;
-
 //scene
 scene = new THREE.Scene();
 scene.fog = new THREE.Fog( 0xffffff, 1, 9000);
 scene.matrixAutoUpdate = false;
 
+//camera
+camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+camera.position.z = 3500;
+scene.add(camera);
+
 group = new THREE.Object3D();
 target = new THREE.Object3D();
 camera.target = target;
 
-var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
+scene.add( group );
+scene.add( target );
 
 lineMat = new THREE.LineBasicMaterial(	{	
 	color:0xb9d49e,
 	opacity:1
  });
-//lineGeometry = new THREE.Geometry();
 
 for( var i=0; i<particleNum; i++){
 	
@@ -90,7 +89,7 @@ for( var i=0; i<particleNum; i++){
 	mesh.updateMatrix();
 	particles[i] = new Array();
 	particles[i][0] = mesh;
-	group.addChild(mesh);
+	group.add(mesh);
 	
 	//branch
 	
@@ -126,7 +125,7 @@ for( var i=0; i<particleNum; i++){
 			mesh.position = bvec;
 			mesh.lookAt( previous );
 			mesh.updateMatrix();
-			particles[i][0].addChild(mesh);
+			particles[i][0].add(mesh);
 			particles[i].push(mesh);
 			prevMesh = mesh;
 			
@@ -134,7 +133,7 @@ for( var i=0; i<particleNum; i++){
 		
 		lineGeom.vertices = vertices;
 		var line = new THREE.Line(lineGeom, lineMat);
-		particles[i][0].addChild(line);
+		particles[i][0].add(line);
 		
 	}
 	
@@ -146,10 +145,7 @@ var light = new THREE.PointLight(0xffffff, 1);
 light.position.x = -800;
 light.position.y = 0;
 light.position.z = 3000;
-	scene.addLight( light );
-
-scene.addObject( group );
-scene.addObject( target );
+scene.add( light );
 
 
 //renderer
@@ -166,6 +162,7 @@ container.appendChild( renderer.domElement );
 pScene = new THREE.Scene();
 pCamera = new THREE.OrthoCamera(-window.innerWidth/2, window.innerWidth/2, window.innerHeight/2, -window.innerHeight/2, -10000, 10000);
 pCamera.position.z = 100;
+pScene.add(pCamera);
 
 //bokeh
 materialDepth = new THREE.MeshDepthMaterial()
@@ -173,14 +170,11 @@ var pars = { minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:
 rtTextureColor = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars, true );
 rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars, true );
 shaderBokeh = THREE.ShaderExtras["bokeh"];
-effectBokeh = new THREE.ShaderPass( shaderBokeh );
-effectBokeh.uniforms["tColor"].texture = rtTextureColor;
-effectBokeh.uniforms["tDepth"].texture = rtTextureDepth;
-effectBokeh.uniforms["focus"].value = 0.90;
+effectBokeh = new THREE.ShaderPass( shaderBokeh );effectBokeh.uniforms["focus"].value = 0.90;
 effectBokeh.uniforms["aperture"].value = 0.05;
 effectBokeh.uniforms["maxblur"].value = 1;
 effectBokeh.uniforms["aspect"].value = window.innerWidth/window.innerHeight;
-pMaterialBokeh = new THREE.MeshShaderMaterial({
+pMaterialBokeh = new THREE.ShaderMaterial({
 	uniforms: effectBokeh.uniforms,
 	vertexShader: shaderBokeh.vertexShader,
 	fragmentShader: shaderBokeh.fragmentShader
@@ -188,7 +182,7 @@ pMaterialBokeh = new THREE.MeshShaderMaterial({
 
 quad = new THREE.Mesh( new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh );
 quad.position.z = -500;
-	pScene.addObject(quad);
+pScene.add(quad);
 
 //vignette
 var shaderVignette = THREE.ShaderExtras["vignette"];
@@ -244,7 +238,7 @@ var stageWidth = window.innerWidth;
 var stageHeight = window.innerHeight;
 camera.aspect =  stageWidth/stageHeight;
 renderer.setSize(stageWidth, stageHeight)
-camera.updateProjectionMatrix();
+//camera.updateProjectionMatrix();
 }
 
 function mouseMove(ev){
@@ -261,17 +255,18 @@ render();
 }
 
 function render(){
+
 renderer.clear();
-		
+
 scene.overrideMaterial = null;
 renderer.render( scene, camera, rtTextureColor, true);
-
 scene.overrideMaterial = materialDepth;
 renderer.render( scene, camera, rtTextureDepth, true );
+renderer.render( pScene, pCamera );
 
-//renderer.render( pScene, pCamera );
+// renderer.render(scene, camera)
 
-composerScene.render();
+
 }
 
 
@@ -452,6 +447,7 @@ group.rotation.x += -my*0.00005;
 group.rotation.y += -mx*0.00005;
 camera.position.x += (-mx*5 - camera.position.x) * 0.05;
 camera.position.y += (my*5 - camera.position.y) * 0.05;
+camera.lookAt( target.position );
 
 
 
