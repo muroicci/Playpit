@@ -19,7 +19,7 @@ var effect;
 // var isolation = 300;
 // var resolution = 40;
 var effectController;
-var numBlobs = 60;
+var numBlobs = 100;
 
 var stats;
 var composer;
@@ -184,7 +184,7 @@ function createScene(){
 	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
 	for (var i = 0; i < numBlobs; i++) {
 
-		var sphereR = 2//Math.random()*6+3;
+		var sphereR = 3//Math.random()*6+3;
 		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
 		var sphereShape = new CANNON.Sphere(sphereR);
 
@@ -197,7 +197,7 @@ function createScene(){
 		//Physics
 		var randX = (Math.random()*2-1)*10;
 		var randZ = (Math.random()*2-1)*10;
-		var sphereBody = new CANNON.RigidBody(0.25,sphereShape);
+		var sphereBody = new CANNON.RigidBody(0.30,sphereShape);
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
@@ -230,10 +230,10 @@ function setupGui(){
 	gui = new DAT.GUI();
 
 	effectController = {
-		isolation: 720,
-		resolution: 32,
-		subtract: 32,
-		strength: 4.3
+		isolation: 900,
+		resolution: 28,
+		subtract: 35,
+		strength: 2.5
 	}
 
 	var is = gui.add(effectController, "isolation", 1, 1000, 1);
