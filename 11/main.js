@@ -19,7 +19,7 @@ var effect;
 // var isolation = 300;
 // var resolution = 40;
 var effectController;
-var numBlobs = 60;
+var numBlobs = 30;
 
 var stats;
 var composer;
@@ -184,7 +184,7 @@ function createScene(){
 	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
 	for (var i = 0; i < numBlobs; i++) {
 
-		var sphereR = 2//Math.random()*6+3;
+		var sphereR = 5//Math.random()*6+3;
 		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
 		var sphereShape = new CANNON.Sphere(sphereR);
 
