@@ -2,11 +2,17 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.ShaderPass = function( shader, textureID ) {
+THREE.DotScreenPass = function( center, angle, scale ) {
 
-	this.textureID = ( textureID !== undefined ) ? textureID : "tDiffuse";
+	var shader = THREE.ShaderExtras[ "dotscreen" ];
 
 	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	if ( center !== undefined )
+		this.uniforms[ "center" ].value.copy( center );
+
+	if ( angle !== undefined )	this.uniforms[ "angle"].value = angle;
+	if ( scale !== undefined )	this.uniforms[ "scale"].value = scale;
 
 	this.material = new THREE.MeshShaderMaterial( {
 
@@ -21,11 +27,12 @@ THREE.ShaderPass = function( shader, textureID ) {
 
 };
 
-THREE.ShaderPass.prototype = {
+THREE.DotScreenPass.prototype = {
 
 	render: function ( renderer, writeBuffer, readBuffer, delta ) {
 
-		this.uniforms[ this.textureID ].texture = readBuffer;
+		this.uniforms[ "tDiffuse" ].texture = readBuffer;
+		this.uniforms[ "tSize" ].value.set( readBuffer.width, readBuffer.height );
 
 		THREE.EffectComposer.quad.materials[ 0 ] = this.material;
 

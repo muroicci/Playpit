@@ -72,7 +72,7 @@ THREE.EffectComposer.prototype = {
 				this.swapBuffers();
 
 			}
-			
+
 			if ( this.passes[ i ] instanceof THREE.MaskPass ) {
 
 				maskActive = true;

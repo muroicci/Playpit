@@ -2,9 +2,9 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.ShaderPass = function( shader, textureID ) {
+THREE.FilmPass = function( noiseIntensity, scanlinesIntensity, scanlinesCount, grayscale ) {
 
-	this.textureID = ( textureID !== undefined ) ? textureID : "tDiffuse";
+	var shader = THREE.ShaderExtras[ "film" ];
 
 	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
@@ -16,16 +16,22 @@ THREE.ShaderPass = function( shader, textureID ) {
 
 	} );
 
+	if ( grayscale !== undefined )	this.uniforms.grayscale.value = grayscale;
+	if ( noiseIntensity !== undefined ) this.uniforms.nIntensity.value = noiseIntensity;
+	if ( scanlinesIntensity !== undefined ) this.uniforms.sIntensity.value = scanlinesIntensity;
+	if ( scanlinesCount !== undefined ) this.uniforms.sCount.value = scanlinesCount;
+
 	this.renderToScreen = false;
 	this.needsSwap = true;
 
 };
 
-THREE.ShaderPass.prototype = {
+THREE.FilmPass.prototype = {
 
 	render: function ( renderer, writeBuffer, readBuffer, delta ) {
 
-		this.uniforms[ this.textureID ].texture = readBuffer;
+		this.uniforms[ "tDiffuse" ].texture = readBuffer;
+		this.uniforms[ "time" ].value += delta;
 
 		THREE.EffectComposer.quad.materials[ 0 ] = this.material;
 
