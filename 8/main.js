@@ -47,7 +47,7 @@
 			document.body.appendChild(container);
 			
 			//camera
-			cameraOrtho = new THREE.OrthoCamera(-stageWidth/2, stageWidth, stageHeight, -stageHeight, -10000, 10000);
+			cameraOrtho = new THREE.OrthographicCamera(-stageWidth/2, stageWidth, stageHeight, -stageHeight, -10000, 10000);
 			camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 10000);
 			camera.position.z = 400;
 			cTarget = new THREE.Object3D();
@@ -56,6 +56,7 @@
 			//scene
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x000000, 1, 10000);
+			scene.add(camera);
 			
 			sceneBG = new THREE.Scene();
 			var bgColor = new THREE.MeshBasicMaterial( {
@@ -64,7 +65,8 @@
 			var plane = new THREE.PlaneGeometry(1,1);
 			var quadBG = new THREE.Mesh(plane, bgColor );
 			quadBG.scale.set(stageWidth, stageHeight);
-			sceneBG.addChild(quadBG)
+			sceneBG.add(quadBG)
+			sceneBG.add(cameraOrtho);
 			
 			//renderer
 			renderer = new THREE.WebGLRenderer( { antialias:false } );
@@ -99,7 +101,7 @@
 			
 			//target
 			target = new THREE.Object3D();
-			target.addChild(cTarget);
+			target.add(cTarget);
 			
 			//Material
 			var texture = THREE.ImageUtils.loadTexture( "/7/textures/100px_circle.png");
@@ -150,12 +152,12 @@
 			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
-			scene.addObject( particles );
+			scene.add( particles );
 			
 
 			line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
 			line.colors = lineColors;
-			scene.addObject( line );
+			scene.add( line );
 			
 			
 			//event
@@ -226,7 +228,7 @@
 			//refresh line
 			var refreshLine = (cnt%2==0);
 			if(refreshLine){
-				scene.removeChild( line );
+				scene.remove( line );
 				lineGeometry = new THREE.Geometry();
 			}
 			
@@ -347,7 +349,7 @@
 				lineGeometry.vertices = vertices;
 				lineGeometry.colors = lineColors;
 				line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
-				scene.addChild( line );
+				scene.add( line );
 			}
 			
 			//rotate objects

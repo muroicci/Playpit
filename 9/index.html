@@ -13,14 +13,14 @@
 	
 	
 	<script src="/common/js/ShaderExtras.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/RenderPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/ShaderPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/TexturePass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/MaskPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/BloomPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/DotScreenPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/FilmPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/RenderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/ShaderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/TexturePass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/MaskPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/BloomPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/DotScreenPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing_dev/FilmPass.js" type="text/javascript" charset="utf-8"></script>
 	
 	
 	<style>
@@ -42,7 +42,7 @@
 				var target, cTarget;
 				var particleGeometry,	particles, particleMaterials;
 
-		    var composerScene;
+			    var composerScene;
 
 				var lineGeometry, lineMaterial, line;
 				var lineColors = new Array();
@@ -54,7 +54,7 @@
 
 				var rotationSpeed = 0;
 
-				var tVector = new THREE.Vector3(10,0,0);
+				var tVector = new THREE.Vector3(-10,0,0);
 				var mrx = 0;
 				var mry = 0;
 				var speedMultiply = 1.00;
@@ -85,15 +85,20 @@
 					container = document.createElement('div');
 					document.body.appendChild(container);
 
-					//camera
-					camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 1200);
-					camera.position.z = 400;
-					cTarget = new THREE.Object3D();
-					camera.target = cTarget;
-
 					//scene
 					scene = new THREE.Scene();
 					scene.fog = new THREE.Fog( 0xffffff, 1, areaLength);
+
+					//camera
+					camera = new THREE.PerspectiveCamera( 75, stageWidth/stageHeight, 1, 1200);
+					scene.add(camera);
+
+					//target
+					cTarget = new THREE.Object3D();
+					target = new THREE.Object3D();
+
+					scene.add(cTarget);
+					scene.add(target);
 
 
 					//renderer
@@ -107,7 +112,7 @@
 
 					//for postprocessing
 					pScene = new THREE.Scene();
-					pCamera = new THREE.OrthoCamera( stageWidth / - 2, stageWidth / 2,  stageHeight / 2, stageHeight/ - 2, -10000, 10000 );
+					pCamera = new THREE.OrthographicCamera( stageWidth / - 2, stageWidth / 2,  stageHeight / 2, stageHeight/ - 2, -10000, 10000 );
 					pCamera.position.z = 100;
 					material_depth = new THREE.MeshDepthMaterial();
 
@@ -130,7 +135,7 @@
 					effectBokeh.uniforms["focus"].value = 1.1;
 					effectBokeh.uniforms[ "aspect" ].value = stageWidth / stageHeight;
 					
-					pMaterialBokeh = new THREE.MeshShaderMaterial( {
+					pMaterialBokeh = new THREE.ShaderMaterial( {
 
 						uniforms: effectBokeh.uniforms,
 						vertexShader: shaderBokeh.vertexShader,
@@ -140,7 +145,7 @@
 
 					quad = new THREE.Mesh( new THREE.PlaneGeometry( window.innerWidth, window.innerHeight ), pMaterialBokeh );
 					quad.position.z = - 500;
-					pScene.addObject( quad );
+					pScene.add( quad );
 
 
 					var renderModel = new THREE.RenderPass( scene, camera );
@@ -152,19 +157,13 @@
 					composerScene.addPass( effectVignette );
 
 
-
-					//target
-					target = new THREE.Object3D();
-					target.addChild(cTarget);
-
 					//Material
 					var texture = THREE.ImageUtils.loadTexture( "/9/textures/100px_circle.png");
 					particleMaterial = new THREE.ParticleBasicMaterial({
 						color:0xffffff,
 						map:texture,
-//						depthTest:true,
+						blending:THREE.Normal,
 						size:particleR,
-//						opacity:0.8,
 						transparent:true
 					});
 
@@ -201,13 +200,13 @@
 					}
 
 					particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
-					particles.sortParticles = true;
-					scene.addObject( particles );
+					//particles.sortParticles = true;
+					scene.add( particles );
 
 
 					line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
 					line.colors = lineColors;
-					scene.addObject( line );
+					scene.add( line );
 
 
 					//event
@@ -231,7 +230,7 @@
 					stageHeight = window.innerHeight;
 					camera.aspect =  stageWidth/stageHeight;
 					renderer.setSize(stageWidth, stageHeight)
-					camera.updateProjectionMatrix();
+				//	camera.updateProjectionMatrix();
 				}
 
 				function mouseMove(ev){
@@ -257,9 +256,8 @@
 					// scene.overrideMaterial = material_depth;
 					// renderer.render( scene, camera, rtTextureDepth, true);
 					// renderer.render( scene, camera);
-					
-					//compose
 					composerScene.render();
+					//renderer.render(scene, camera)
 
 
 				}
@@ -276,7 +274,7 @@
 					//refresh line
 					var refreshLine = (cnt%2==0);
 					if(refreshLine){
-						scene.removeChild( line );
+						scene.remove( line );
 						lineGeometry = new THREE.Geometry();
 					}
 
@@ -288,9 +286,9 @@
 
 					//camera
 					var cvec = target.position.clone();
-					cvec.z -= 1000;
+					cvec.z += 1000;
 					camera.position = cvec;
-					
+
 					var cmtx1 = new THREE.Matrix4();
 					cmtx1.setTranslation(-0,0,200);
 					var cmtrx = new THREE.Matrix4();
@@ -303,6 +301,10 @@
 					mm = cmtry.multiplySelf(cmtrx);
 					mm = cmtx2.multiplySelf(cmtry);
 					cTarget.position = mm.getPosition();
+					// cTarget.position = target.position;
+
+					camera.lookAt(cTarget);
+
 
 					//particles
 					var vertices = [];
@@ -383,7 +385,7 @@
 						lineGeometry.vertices = vertices;
 						lineGeometry.colors = lineColors;
 						line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
-						scene.addChild( line );
+						scene.add( line );
 					}
 
 					cnt++;
