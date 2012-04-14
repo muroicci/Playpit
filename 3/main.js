@@ -31,12 +31,11 @@
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			camera.position.z = 100;
 			
 			//scene
 			scene = new THREE.Scene();
-//			scene.fog = new THREE.FogExp2( 0x000000, 0.000001);
 			var geometry = new THREE.Geometry();
 			
 			//renderer
@@ -59,7 +58,7 @@
 			
 			particles = new THREE.ParticleSystem( geometry, material );
 			particles.sortParticles = true;
-			scene.addObject( particles );
+			scene.add( particles );
 			
 			//event
 			document.addEventListener('mousemove', mouseMove);
@@ -103,6 +102,7 @@
 			
 			camera.position.x += (mx/4 - camera.position.x) * 0.05;
 			camera.position.y += (my/2 - camera.position.y) * 0.05;
+			camera.lookAt( particles.position );
 			
 			renderer.render( scene, camera );
 		}

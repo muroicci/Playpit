@@ -34,12 +34,13 @@
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			camera.position.z = 400;
 			
 			//scene
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x051519, 1, 900);
+			scene.add(camera);
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
@@ -65,7 +66,7 @@
 				
 				particles[i] = mesh;
 				
-				group.addChild(mesh);
+				group.add(mesh);
 			}
 			
 			//light
@@ -74,9 +75,9 @@
 			light.position.y = 0;
 			light.position.z = 400;
 			
-			scene.addLight( light );
-			scene.addObject( group );
-			scene.addObject( target );
+			scene.add( light );
+			scene.add( group );
+			scene.add( target );
 			
 			//renderer
 			renderer = new THREE.WebGLRenderer({autoClear:false});
@@ -118,15 +119,15 @@
 		function animate(){
 			requestAnimationFrame(animate);
 			update();
+			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
+			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
+			camera.lookAt(target.position);
 			render();
 //			stats.update();
 		}
 		
 		function render(){
 			
-//			camera.position.x += (mx - camera.position.x) * 0.05;
-			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
-			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
 
 			renderer.render( scene, camera );
 		}

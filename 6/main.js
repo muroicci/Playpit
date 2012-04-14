@@ -35,20 +35,29 @@
 			container = document.createElement('div');
 			document.body.appendChild(container);
 			
-			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
-			camera.position.z = 400;
-			
 			//scene
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x222222, 1, 900);
-			
+
+			//camera
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera.position.z = 400;
+			scene.add(camera);
+
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
 		 	group.position.y =  target.position.y = -50;
-		
-			camera.target = target;
 
+			//light
+			var light = new THREE.PointLight(0xffffff, 2.5);
+			light.position.x = 0;
+			light.position.y = 0;
+			light.position.z = 0;
+			
+			scene.add( light );
+			scene.add( group );
+			scene.add( target );
+			
 			var texture = THREE.ImageUtils.loadTexture( "/6/textures/100px_circle.png");
 			material = new THREE.MeshLambertMaterial({
 				color:0x000000,
@@ -59,9 +68,11 @@
 				opacity:1
 			});
 			
-			meshMat = new THREE.MeshLambertMaterial(	{	
-				color:0x666666
-//				depthTest:true
+			meshMat = new THREE.MeshPhongMaterial(	{	
+				color:0x666666,
+				perPixel:true,
+				shininess:10,
+				depthTest:true
 		 	});
 			
 			meshGeom = new THREE.Geometry();
@@ -80,8 +91,9 @@
 				var mesh = new THREE.Mesh(geometry, material);
 				mesh.matrixAutoUpdate = false;
 				mesh.updateMatrix();
+				mesh.doubleSided = true;
 				particles[i] = mesh;
-				group.addChild(mesh);
+				group.add(mesh);
 				
 				//meshes
 				meshGeom.vertices.push(new THREE.Vertex(pPos[i]));
@@ -90,17 +102,7 @@
 			
 			line = new THREE.Mesh(meshGeom, meshMat);
 			line.doubleSided = true;
-			scene.addChild( line );
-			
-			//light
-			var light = new THREE.PointLight(0xffffff, 2.5);
-			light.position.x = 0;
-			light.position.y = 0;
-			light.position.z = 0;
-			
-			scene.addLight( light );
-			scene.addObject( group );
-			scene.addObject( target );
+			scene.add( line );
 			
 			//renderer
 			renderer = new THREE.WebGLRenderer( { clearColor:0x222222, clearAlpha: 1 } );
@@ -148,6 +150,7 @@
 		function render(){
 			
 			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
+			camera.lookAt(target.position);
 			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
 //			line.rotation.y = group.rotation.y;
 			renderer.render( scene, camera );
@@ -165,8 +168,6 @@
 			ofy += 0.008;
 			
 			for(var i=0; i<particleNum; i++){
-				var mesh = particles[i];
-				var ps = pPos[i];
 				var p = pVectors[i];
 				var v = vVectors[i];
 				
@@ -314,8 +315,8 @@
 									var face = new THREE.Face3(i, j, k );
 									var nml = getNormalVector(pPos[i], pPos[j], pPos[k]);
 									face.normal = nml;
-									nml.addSelf(pPos[i]);
-								 	nml.multiplyScalar(-1);
+									//nml.addSelf(pPos[i]);
+								 	//nml.multiplyScalar(-1);
 									meshGeom.faces.push( face );
 								}
 							}
@@ -325,10 +326,10 @@
 			}
 
 			//draw lines
-			group.removeChild(line);
+			group.remove(line);
 			line = new THREE.Mesh(meshGeom, meshMat);
 			line.doubleSided = true;
-			group.addChild(line);
+			group.add(line);
 		
 		}
 			

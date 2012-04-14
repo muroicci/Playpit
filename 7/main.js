@@ -47,15 +47,15 @@
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			camera.position.z = 400;
 			
 			//scene
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x222222, 1, 1400);
+			scene.add(camera);
 			
 			target = new THREE.Object3D();
-			camera.target = target;
 			
 			//Material
 			var texture = THREE.ImageUtils.loadTexture( "/7/textures/100px_circle.png");
@@ -110,12 +110,12 @@
 			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
-			scene.addObject( particles );
+			scene.add( particles );
 			
 
 			line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
 			line.colors = lineColors;
-			scene.addObject( line );
+			scene.add( line );
 			
 			//renderer
 			renderer = new THREE.WebGLRenderer( { antialias:true, autoClear:false } );
@@ -157,7 +157,7 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
-			camera.updateProjectionMatrix();
+			// camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -172,6 +172,7 @@
 			
 			camera.position.x += (mx*2 - camera.position.x) * 0.05;
 			camera.position.y += (my*2 - camera.position.y) * 0.05;
+			camera.lookAt( target.position)
 			
 			update();
 			render();
@@ -198,7 +199,7 @@
 			var refreshLine = (cnt++%3==0);
 			
 			if(refreshLine){
-				scene.removeChild( line );
+				scene.remove( line );
 				lineGeometry = new THREE.Geometry();
 			}
 			
@@ -257,11 +258,10 @@
 				var mtrr = new THREE.Matrix4();
 				mtrr.setRotationY( p.y );
 				
-				var m = mtr.multiplySelf(mtx);
-				m = mtrr.multiplySelf( m );
-				
-				ptcl.position = m.getPosition();
-				ps = ptcl.position;
+				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
+
+				ps = m.getPosition();
+				ptcl.position = ps.clone();
 				
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
@@ -273,13 +273,13 @@
 					}
 				}				
 			}
-			
+
 			//draw lines
 			if(refreshLine){
 				lineGeometry.vertices = vertices;
 				lineGeometry.colors = lineColors;
 				line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
-				scene.addChild( line );
+				scene.add( line );
 			}
 			
 			//rotate objects
