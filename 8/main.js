@@ -3,7 +3,7 @@
 		var target, cTarget;
 		var particleGeometry,	particles, particleMaterials;
 		
-    var composerScene;
+    	var composerScene;
 
 		var lineGeometry, lineMaterial, line;
 		var lineColors = new Array();
@@ -48,10 +48,9 @@
 			
 			//camera
 			cameraOrtho = new THREE.OrthographicCamera(-stageWidth/2, stageWidth, stageHeight, -stageHeight, -10000, 10000);
-			camera = new THREE.Camera( 75, stageWidth/stageHeight, 1, 10000);
+			camera = new THREE.PerspectiveCamera( 75, stageWidth/stageHeight, 1, 10000);
 			camera.position.z = 400;
 			cTarget = new THREE.Object3D();
-			camera.target = cTarget;
 			
 			//scene
 			scene = new THREE.Scene();
@@ -193,7 +192,6 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
-			camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -201,8 +199,6 @@
 			omy = my;
 			mx = ev.clientX - window.innerWidth/2;
 			my = ev.clientY - window.innerHeight/2;
-			mrx = 0.008*(mx)*pi/180;
-			mry = 0.008*(my)*pi/180;
 		}
 		
 		function animate(){
@@ -232,6 +228,10 @@
 				lineGeometry = new THREE.Geometry();
 			}
 			
+			//mouse position
+			mrx += 0.008*(mx)*pi/180; //(0.08*(mx)*pi/180 - mrx)*0.8;
+			mry += 0.008*(my)*pi/180; //(0.08*(my)*pi/180 - mry)*0.8;
+
 			//target vector
 			tVector.normalize();
 			tVector = tVector.multiplyScalar(speedMultiply*10);
@@ -241,7 +241,8 @@
 			tmtrx.setRotationX( -mry );
 			var tmtry = new THREE.Matrix4();
 			tmtry.setRotationY( -mrx );
-			
+
+
 			var mm = tmtrx.multiplySelf(tmtp); 
 			mm= tmtry.multiplySelf(tmtrx);
 			tVector = mm.getPosition();
@@ -255,33 +256,35 @@
 			cvec.setLength(target.position.length()-800);
 			camera.position = cvec;
 			
-			var cmtx1 = new THREE.Matrix4();
-			cmtx1.setTranslation(0,0,200);
-			var cmtrx = new THREE.Matrix4();
-			cmtrx.setRotationX( Math.cos(cnt*pi/180) );
-			var cmtry = new THREE.Matrix4();
-			cmtry.setRotationY( Math.sin(cnt*pi/180) );
-			var cmtx2 = new THREE.Matrix4();
-			cmtx2.setPosition( target.position );
-			var mm = cmtrx.multiplySelf(cmtx1);
-			mm = cmtry.multiplySelf(cmtrx);
-			mm = cmtx2.multiplySelf(cmtry);
-			cTarget.position = mm.getPosition();
+			// var cmtx1 = new THREE.Matrix4();
+			// cmtx1.setTranslation(0,0,200);
+			// var cmtrx = new THREE.Matrix4();
+			// cmtrx.setRotationX( Math.cos(cnt*pi/180) );
+			// var cmtry = new THREE.Matrix4();
+			// cmtry.setRotationY( Math.sin(cnt*pi/180) );
+			// var cmtx2 = new THREE.Matrix4();
+			// cmtx2.setPosition( target.position );
+			// var mm = cmtrx.multiplySelf(cmtx1);
+			// mm = cmtry.multiplySelf(cmtrx);
+			// mm = cmtx2.multiplySelf(cmtry);
+			// cTarget.position = mm.getPosition();
+
+			camera.lookAt(target.position);
 			
 			//particles
 			var vertices = [];
 			var speed = 1.0;
 			var perlin = new ImprovedNoise();
-			
+			var ptcl, ps, p, v, rp, rv;
+
 			for(var i=0; i<particleNum; i++){
 				
-				var ptcl = particleGeometry.vertices[i];
-				var ps = pPos[i];
-				var p = pVectors[i];
-				var v = vVectors[i];
-				var rp = rpVectors[i];
-				var rv = rvVectors[i];
-
+				ptcl = particleGeometry.vertices[i];
+				ps = pPos[i];
+				p = pVectors[i];
+				v = vVectors[i];
+				rp = rpVectors[i];
+				rv = rvVectors[i];
 				var z = i*10;
 				
 				//noise
@@ -328,11 +331,13 @@
 				mtrr.setRotationY( p.y );
 				
 				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
-				
-				ptcl.position = m.getPosition();
-				ptcl.position.addSelf( target.position );
-				ps = ptcl.position;
-				
+
+				ps.getPositionFromMatrix(m);
+				ps.addSelf( target.position );
+				//set particle position
+				ptcl.position = pPos[i];
+
+				//set line postition
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
 					oPos[i].pop();
@@ -343,7 +348,7 @@
 					}
 				}				
 			}
-			
+
 			//draw lines
 			if(refreshLine){
 				lineGeometry.vertices = vertices;
@@ -351,15 +356,14 @@
 				line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
 				scene.add( line );
 			}
-			
+
 			//rotate objects
 			// particles.rotation.y += rotationSpeed;
 			// particles.rotation.x += rotationSpeed;
 			// line.rotation = particles.rotation;
 			// rotationSpeed += ( 0 - rotationSpeed)*0.04;
 			cnt++;
-			
-			
+
 			
 		}
 		

@@ -110,23 +110,6 @@
 					container.appendChild( renderer.domElement );
 
 
-					//for postprocessing
-					//vignette
-					var shaderVignette = THREE.ShaderExtras[ "vignette" ];
-					var effectVignette = new THREE.ShaderPass( shaderVignette );
-					effectVignette.uniforms["offset"].value = 0.50;
-					effectVignette.uniforms["darkness"].value = 1.5;
-					effectVignette.renderToScreen = true;
-					
-
-					var renderModel = new THREE.RenderPass( scene, camera );
-					var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
-					var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
-
-					composerScene = new THREE.EffectComposer( renderer,  renderTarget);
-					composerScene.addPass( renderModel );
-					composerScene.addPass( effectVignette );
-
 
 					//Material
 					var texture = THREE.ImageUtils.loadTexture( "/9/textures/100px_circle.png");
@@ -138,46 +121,21 @@
 						transparent:true
 					});
 
-					lineMaterial = new THREE.LineBasicMaterial({
-							vertexColors:true,
-							color:0xffffff,
-							blending:THREE.AdditiveBlending,
-							opacity: 1.0,//0.1,
-							lineWidth:1
-						});
 
 					//create particles
 					particleGeometry = new THREE.Geometry();
-					lineGeometry = new THREE.Geometry();
 
 					for( var i=0; i<particleNum; i++){
-
 						//create vectors;
 						vVectors[i] = new THREE.Vector3( 0, 0, 0);
 						particlePositions[i] = new THREE.Vector3(areaLength*(Math.random()*2-1), -200, areaLength*(Math.random()*2-1));
 						particleGeometry.vertices.push( new THREE.Vertex(particlePositions[i]));
 
-						for( var j=0; j<strokeNum; j++){
-							oldPositions.push(new Array());
-							oldPositions[i].push(particlePositions[i].clone());
-							lineGeometry.vertices.push( new THREE.Vertex(oldPositions[i][j]) );
-
-							var lc = new THREE.Color( colors[i%colors.length] );
-							if(j>0){
-								lineColors.push( lc );
-								lineColors.push( lc );
-							}
-						}
 					}
 
 					particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
-					particles.sortParticles = true;
 					scene.add( particles );
 
-
-					line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
-					line.colors = lineColors;
-					scene.add( line );
 
 
 					//event
@@ -220,15 +178,7 @@
 
 					renderer.clear();
 					
-					//color
-					// scene.overrideMaterial = null;
-					// renderer.render( scene, camera, rtTextureColor, true);
-					// //depth
-					// scene.overrideMaterial = material_depth;
-					// renderer.render( scene, camera, rtTextureDepth, true);
-					// renderer.render( scene, camera);
-					composerScene.render();
-					//renderer.render(scene, camera)
+					renderer.render(scene, camera)
 
 
 				}
@@ -241,110 +191,6 @@
 
 
 				function update(){
-
-					//refresh line
-					var refreshLine = (cnt%2==0);
-					if(refreshLine){
-						scene.remove( line );
-						lineGeometry = new THREE.Geometry();
-					}
-
-					//target vector
-					var svec = tVector.clone();
-					svec = svec.multiplyScalar(speedMultiply);
-					target.position.addSelf( svec );
-					speedMultiply += (1-speedMultiply)/(60+speedMultiply);
-
-					//camera
-					var cvec = target.position.clone();
-					cvec.z += 1000;
-					camera.position = cvec;
-					camera.lookAt(target.position);
-
-
-					//particles
-					var vertices = [];
-					var speed = 1.0;
-					t1+=0.024;
-					t2+=0.008;
-
-					for(var i=0; i<particleNum; i++){
-
-						var ptcl = particleGeometry.vertices[i];
-						var ps = particlePositions[i];
-						var v = vVectors[i];
-
-						//position
-						var resultX = fBm2d( t1+ps.x / stageWidth, t1+ps.y/stageHeight, 1);
-						var resultY = fBm2d( ps.x / stageWidth,  ps.z/stageHeight*0.5, 1);
-						var resultZ = fBm2d( t2+ps.x / stageWidth, t2+ps.y/stageHeight, 1);
-						v.x += resultX*1.5*speedMultiply;
-						v.y += resultY*1.5*speedMultiply;
-						v.z += resultZ*3.5*speedMultiply;
-						
-						v.x += (0-v.x)/10;
-						v.y += (0-v.y)/10;
-						v.z += (0-v.z)/10;
-						
-						ps.addSelf(v);
-						ps.addSelf( tVector );
-						
-						ps.y += (resultY*500-100 -ps.y)/20;
-
-
-						//line position
-						if(refreshLine){
-							oldPositions[i].unshift(ps.clone());
-							oldPositions[i].pop();
-
-							for( var j=0; j<strokeNum-1; j++){
-								vertices.push( new THREE.Vertex( oldPositions[i][j] ) );
-								vertices.push( new THREE.Vertex( oldPositions[i][j+1] ) );
-							}
-						}
-
-						//wrapping point
-						if(ps.x>areaLength+target.position.x){ 
-							ps.x = -areaLength + Math.random()*100;
-							ps.z = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
-							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
-						};
-						if(ps.x<-areaLength+target.position.x) {
-							ps.x = areaLength - Math.random()*100;
-							ps.z = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
-							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
-							
-						}
-						if(ps.z>areaLength+target.position.z){
-							ps.z = -areaLength + Math.random()*100;
-							ps.x = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
-							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
-						} 
-						if(ps.z<-areaLength+target.position.z) {
-							ps.z = -areaLength - Math.random()*100;
-							ps.x = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
-							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
-						}
-
-					}
-
-					//set particle position
-					ptcl.position = ps; //mtx.getPosition();
-					//draw lines
-					if(refreshLine){
-						lineGeometry.vertices = vertices;
-						lineGeometry.colors = lineColors;
-						line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
-						scene.add( line );
-					}
-
-					cnt++;
-
-
 
 				}
 

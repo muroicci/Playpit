@@ -37,17 +37,19 @@
 			document.body.appendChild(container);
 			
 			//camera
-			camera = new THREE.Camera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			camera.position.z = 400;
 			
 			//scene
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x201021, 1, 900);
+
+			scene.add(camera);
 			
 			group = new THREE.Object3D();
 			target = new THREE.Object3D();
 		 	target.position.y = 50;
-			camera.target = target;
+			
 
 			var texture = THREE.ImageUtils.loadTexture( "textures/100px_circle.png");
 			material = new THREE.MeshBasicMaterial({
@@ -80,14 +82,14 @@
 				mesh.matrixAutoUpdate = false;
 				mesh.updateMatrix();
 				particles[i] = mesh;
-				group.addChild(mesh);
+				group.add(mesh);
 				
 				//line
 				lineGeometry.vertices.push(new THREE.Vertex(pPos[i]));
 			}
 			
 			line = new THREE.Line(lineGeometry, lineMat, THREE.LinePieces);
-			//group.addChild( line );
+			//group.add( line );
 			
 			//light
 			var light = new THREE.PointLight(0xffffff, 1);
@@ -95,9 +97,9 @@
 			light.position.y = 0;
 			light.position.z = 400;
 			
-			scene.addLight( light );
-			scene.addObject( group );
-			scene.addObject( target );
+			scene.add( light );
+			scene.add( group );
+			scene.add( target );
 			
 			
 			//renderer
@@ -128,7 +130,6 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
-			camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -141,15 +142,18 @@
 		function animate(){
 			requestAnimationFrame(animate);
 			update();
+
+			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
+			camera.lookAt( target.position );
+			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
+			line.rotation.y = group.rotation.y;
+
+			
 			render();
 //			stats.update();
 		}
 		
 		function render(){
-			
-			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
-			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
-			line.rotation.y = group.rotation.y;
 			renderer.render( scene, camera );
 		}
 		
@@ -158,7 +162,7 @@
 		var ofy = Math.random()*10;
 
 		function update(){
-			
+
 			ofx += 0.004;
 			ofy += 0.008;
 			
@@ -315,11 +319,11 @@
 			}
 			
 			//draw lines
-			scene.removeChild(line);
+			scene.remove(line);
 			lineGeometry = new THREE.Geometry();
 			lineGeometry.vertices = vertices;
 			line = new THREE.Line(lineGeometry, lineMat, THREE.LinePieces)
-			scene.addChild(line);
+			scene.add(line);
 			
 		}
 		

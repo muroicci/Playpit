@@ -258,11 +258,10 @@
 				var mtrr = new THREE.Matrix4();
 				mtrr.setRotationY( p.y );
 				
-				var m = mtr.multiplySelf(mtx);
-				m = mtrr.multiplySelf( m );
-				
-				ptcl.position = m.getPosition();
-				ps = ptcl.position;
+				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
+
+				ps = m.getPosition();
+				ptcl.position = ps.clone();
 				
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
@@ -274,7 +273,7 @@
 					}
 				}				
 			}
-			
+
 			//draw lines
 			if(refreshLine){
 				lineGeometry.vertices = vertices;

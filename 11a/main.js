@@ -12,8 +12,8 @@ var world, bp;
 var phys_bodies =[];
 var phys_visuals =[];
 
-var SHADOW_MAP_WIDTH = 1024;
-var SHADOW_MAP_HEIGHT = 1024;
+var SHADOW_MAP_WIDTH = 2048;
+var SHADOW_MAP_HEIGHT = 2048;
 
 
 function init(){
@@ -36,23 +36,23 @@ function init(){
 	scene.add( group );
 
 	//camera
-	camera = new THREE.Camera( 40, width/height, 1, 1000 );
+	camera = new THREE.PerspectiveCamera( 40, width/height, 1, 1000 );
 	camera.position.x = 0;
 	camera.position.y = 400;
 	camera.position.z = -400;
+	scene.add(camera);
 
 	cameraTarget = new THREE.Object3D();
 	cameraTarget.position.y = 30;
-	camera.target = cameraTarget;
+	//camera.target = cameraTarget;
 
 	//light
-    var ambient = new THREE.AmbientLight( 0x666666 );
+    var ambient = new THREE.AmbientLight( 0x222222);
     scene.add( ambient );
 
 	var light = new THREE.SpotLight( 0xffffff, 1);
-	light.shadowCameraVisible = true;
 	light.castShadow = true;
-	light.position.set (0,1000,0);
+	light.position.set (0,800,0);
 	scene.add(light);
 
 	//renderer
@@ -61,8 +61,7 @@ function init(){
 	renderer.setSize( width, height );
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapSoft = true;
-	renderer.shadowMapBias = 0.0039;
-	renderer.shadowMapDarkness = 0.2;
+	renderer.shadowMapDarkness = 0.15;
 	renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
 	renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
 	renderer.setClearColorHex(0xffffff, 1.0);
@@ -139,7 +138,7 @@ function createScene(){
 
 
 	//sphere
-	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
+	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xdddddd});
 	for (var i = 0; i < 100; i++) {
 
 		var sphereR = Math.random()*6+3;
@@ -180,8 +179,8 @@ var heavyObjMeshes = [];
 
 function createHeavyObj(chr){
 
-	if(heavyObjBodies.length>4){
-		group.removeChild(heavyObjMeshes.shift());
+	if(heavyObjBodies.length>8){
+		group.remove(heavyObjMeshes.shift());
 		world.remove(heavyObjBodies.shift());
 	}
 
@@ -196,7 +195,8 @@ function createHeavyObj(chr){
 
 	//visual
 	var sphereGeometry = new THREE.SphereGeometry( r, 16, 16);
-	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xff8d28});
+	//var sphereMaterial = new THREE.MeshLambertMaterial({color:0xff8d28});
+	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xff8d28, specular: 0xffffff, ambient: 0xff5a16, shininess: 250, perPixel: true } );
 	var heavyObjMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
@@ -221,6 +221,7 @@ function update(){
 	camera.position.y += ( -mousey/5 + 100 - camera.position.y)*0.02;
 	camera.position.x = 200*Math.cos(cr);
 	camera.position.z = 200*Math.sin(cr);
+	camera.lookAt(cameraTarget.position)
 
 	
 	//Physics
