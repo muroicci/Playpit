@@ -119,6 +119,18 @@
 	"subColor1":"#b9d49e",
 	"subColor2":"#e8f196",
 	"text":"Move mouse to change angle."
+},
+
+{
+	"link":"/11/index.html",
+	"backgroundColor":"#ffffff",
+	"textColor1":"#666666",
+	"textColor2":"#666666",
+	"textColor3":"#999999",
+	"themeColor":"#ff8d28",
+	"subColor1":"#ff8d28",
+	"subColor2":"#ff8d28",
+	"text":"Click to drop a heavy ball."
 }
 
 
