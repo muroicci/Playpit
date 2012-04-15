@@ -47,13 +47,12 @@ function init() {
 	scene.matrixAutoUpdate = false;
 
 	//camera
-	camera = new THREE.Camera(75, window.innerWidth / window.innerHeight, 1, 10000);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	camera.position.z = 3500;
 	scene.add(camera);
 
 	group = new THREE.Object3D();
 	target = new THREE.Object3D();
-	camera.target = target;
 
 	// var texture = THREE.ImageUtils.loadTexture("textures/100px_circle.png");
 
@@ -62,6 +61,7 @@ function init() {
 		opacity: 1
 	});
 	//lineGeometry = new THREE.Geometry();
+
 	for (var i = 0; i < particleNum; i++) {
 
 		//create vectors;
@@ -78,7 +78,7 @@ function init() {
 		pPos[i][0].z = sphereR * Math.cos(pVectors[i].y);
 
 		//create particles
-		geometry = new THREE.CylinderGeometry(16, pr/2, pr / 2, 0);
+		geometry = new THREE.CylinderGeometry(pr/2, pr / 2, 0, 16);
 		var material = new THREE.MeshBasicMaterial({
 			color: colorTables[Math.floor(Math.random() * colorTables.length)],
 			shading: THREE.FlatShading
@@ -91,6 +91,7 @@ function init() {
 		particles[i] = new Array();
 		particles[i][0] = mesh;
 		group.add(mesh);
+
 
 		//branch
 		if (Math.random() < 0.5) {
@@ -115,7 +116,7 @@ function init() {
 				previous = bvec;
 				vertices.push(new THREE.Vertex(bvec));
 
-				geometry = new THREE.CylinderGeometry(16, pr / (j + 2) / 2, pr / (j + 2) / 2, 0);
+				geometry = new THREE.CylinderGeometry(pr / (j + 2) / 2, pr / (j + 2) / 2, 0, 16);
 				material = new THREE.MeshBasicMaterial({
 					color: colorTables[Math.floor(Math.random() * colorTables.length)],
 					shading: THREE.FlatShading
@@ -466,6 +467,7 @@ function update() {
 	group.rotation.y += -mx * 0.00005;
 	camera.position.x += (-mx * 5 - camera.position.x) * 0.05;
 	camera.position.y += (my * 5 - camera.position.y) * 0.05;
+	camera.lookAt(target.position);
 
 
 }
