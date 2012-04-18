@@ -131,8 +131,19 @@
 	"subColor1":"#ff8d28",
 	"subColor2":"#ff8d28",
 	"text":"Click to drop a heavy ball."
+},
+
+{
+	"link":"/12/perfume/index.html",
+	"backgroundColor":"#000000",
+	"textColor1":"#dd0000",
+	"textColor2":"#ffffff",
+	"textColor3":"#666666",
+	"themeColor":"#dd0000",
+	"subColor1":"#00ff00",
+	"subColor2":"#0000ff",
+	"text":"Click and drag to change camera angle."
 }
 
-
-
 ]
+
