@@ -22,6 +22,27 @@ var motions = [];
 
 var audio;
 
+var frameBufferSize, bufferSize, signal, peak;
+var fft;
+var context;
+var source;
+var audioProcessor;
+var gainNode;
+var currentvalue = [];
+var maxvalue = [];
+
+var channels = [];
+var roots = [];
+var numFrames = [];
+var secsPerFrames = [];
+var startTimes = [];
+var currentFrames = [];
+var nodes = [];
+var spotLightColors = [0x00fffff, 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff7800];
+
+var isMute = true;
+
+
 $(function() {
 
 	if (!Detector.webgl) Detector.addGetWebGLMessage();
@@ -112,14 +133,6 @@ $(function() {
 
 });
 
-var frameBufferSize, bufferSize, signal, peak;
-var fft;
-var context;
-var source;
-var audioProcessor;
-var gainNode;
-var currentvalue = [];
-var maxvalue = [];
 
 function loadAudio() {
 
@@ -144,6 +157,16 @@ function loadAudio() {
 		source.buffer = context.createBuffer(request.response, false);
 		source.noteOn(0);
 		startTimes[0] = Date.now();
+		console.log('play')
+
+		if(!isMute){
+			source.gain.value = 1;
+			$("#mute").text("Mute Sound");
+		}else{
+			source.gain.value = 0;
+			$("#mute").text("Turn On Sound");
+		}
+
 	}
 
 	request.send();
@@ -193,14 +216,6 @@ function audioAvailable(event) {
 
 }
 
-var channels = [];
-var roots = [];
-var numFrames = [];
-var secsPerFrames = [];
-var startTimes = [];
-var currentFrames = [];
-var nodes = [];
-var spotLightColors = [0x00fffff, 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff7800];
 
 //load and parsing data: modified from Saqoosha's code "http://saqoo.sh/a/labs/perfume/2/"
 
@@ -342,9 +357,9 @@ function createScene() {
 	//mute
 	$("#mute").click(mute);
 
+
 }
 
-var isMute = false;
 
 function mute(){
 	if(isMute){
