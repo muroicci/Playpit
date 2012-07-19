@@ -24,6 +24,16 @@ var numBlobs = 60;
 var stats;
 var composer;
 
+var showBall = false;
+var showBlob = true;
+var blobAlpha = 1;
+
+var areaRange = 100;
+
+
+$(document).ready(function(){
+	init();
+})
 
 function init(){
 
@@ -49,6 +59,7 @@ function init(){
 	camera.position.x = 0;
 	camera.position.y = 400;
 	camera.position.z = -400;
+	camera.matrixAutoUpdate = false;
 
 	cameraTarget = new THREE.Object3D();
 	cameraTarget.position.y = 60;
@@ -127,12 +138,13 @@ function mouseMove(ev){
 	mousey = ev.clientY - window.innerHeight/2;
 }
 
+
 function resize(){
 	var stageWidth  = window.innerWidth;
 	var stageHeight = window.innerHeight;
 	camera.aspect   = stageWidth/stageHeight;
+	camera.updateProjectionMatrix();
 	renderer.setSize(stageWidth, stageHeight)
-//	camera.updateProjectionMatrix();
 }
 
 function createScene(){
@@ -155,43 +167,44 @@ function createScene(){
 	world.add(groundBody);
 	
 	// plane -x
-	var planeShapeXmin   = new CANNON.Plane(new CANNON.Vec3(0,0,1));
-	var planeXmin        = new CANNON.RigidBody(0, planeShapeXmin);
-	planeXmin.setPosition(0,0,-50);
-	world.add(planeXmin);
+	// var planeShapeXmin   = new CANNON.Plane(new CANNON.Vec3(0,0,1));
+	// var planeXmin        = new CANNON.RigidBody(0, planeShapeXmin);
+	// planeXmin.setPosition(0,0,-areaRange);
+	// world.add(planeXmin);
 	
-	// Plane +x
-	var planeShapeXmax   = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
-	var planeXmax        = new CANNON.RigidBody(0, planeShapeXmax);
-	planeXmax.setPosition(0,0,50);
-	world.add(planeXmax);
+	// // Plane +x
+	// var planeShapeXmax   = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
+	// var planeXmax        = new CANNON.RigidBody(0, planeShapeXmax);
+	// planeXmax.setPosition(0,0,areaRange);
+	// world.add(planeXmax);
 	
-	// Plane -z
-	var planeShapeYmin   = new CANNON.Plane(new CANNON.Vec3(1,0,0));
-	var planeYmin        = new CANNON.RigidBody(0, planeShapeYmin);
-	planeYmin.setPosition(-50,0,0);
-	world.add(planeYmin);
+	// // Plane -z
+	// var planeShapeYmin   = new CANNON.Plane(new CANNON.Vec3(1,0,0));
+	// var planeYmin        = new CANNON.RigidBody(0, planeShapeYmin);
+	// planeYmin.setPosition(-areaRange,0,0);
+	// world.add(planeYmin);
 	
-	// Plane +z
-	var planeShapeYmax   = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
-	var planeYmax        = new CANNON.RigidBody(0, planeShapeYmax);
-	planeYmax.setPosition(50,0,0);
-	world.add(planeYmax);
+	// // Plane +z
+	// var planeShapeYmax   = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
+	// var planeYmax        = new CANNON.RigidBody(0, planeShapeYmax);
+	// planeYmax.setPosition(areaRange,0,0);
+	// world.add(planeYmax);
 	
 
 	//sphere
 //	var sphereMaterial = new THREE.MeshLambertMaterial({color:0xffffff});
-	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
+	var sphereMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, specular: 0x111111, shininess: 1, perPixel: true } );
 	for (var i = 0; i < numBlobs; i++) {
 
-		var sphereR = 2//Math.random()*6+3;
-		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
+		var sphereR = 10//Math.random()*6+3;
+		var sphereGeometry = new THREE.SphereGeometry(sphereR,8,8);
 		var sphereShape = new CANNON.Sphere(sphereR);
 
 		var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial);
+		sphereMesh.matrixAutoUpdate = false;
 		sphereMesh.castShadow = true;
 		sphereMesh.receiveShadow = true;
-		//group.add( sphereMesh );
+		if(showBall) group.add( sphereMesh );
 		sphereMesh.useQuaternion = true;
 
 		//Physics
@@ -200,7 +213,7 @@ function createScene(){
 		var sphereBody = new CANNON.RigidBody(0.25,sphereShape);
 
 		//start position
-		var pos = new CANNON.Vec3( 0, i*4+100, 0);
+		var pos = new CANNON.Vec3( 0, i*sphereR*2+300, 0);
 		sphereBody.setPosition(pos.x + randX, pos.y, pos.z+randZ);
 
 		phys_bodies.push(sphereBody);
@@ -209,15 +222,27 @@ function createScene(){
 
 	}
 
+	effectController = {
+		isolation: 720,
+		resolution: 28,
+		subtract: 40,
+		strength: 7.0
+	}
+
 	setupGui();
 
 	//Marching Cubes
-	effect = new THREE.MarchingCubes( effectController.resolution, sphereMaterial );
+	var blobMaterial = new THREE.MeshLambertMaterial({
+			color:0xffff00,
+			opacity:blobAlpha
+		})
+
+	effect = new THREE.MarchingCubes( effectController.resolution, blobMaterial );
 	effect.castShadow = true;
 	effect.receiveShadow = true;
 	effect.isolation = effectController.isolation;
-	effect.position.set(0,200,0);
-	effect.scale.set(200,200,200);
+	effect.position.set(0,2*areaRange,0);
+	effect.scale.set(2*areaRange,2*areaRange,2*areaRange);
 	scene.add(effect);
 
 
@@ -229,17 +254,28 @@ function setupGui(){
 
 	gui = new DAT.GUI();
 
-	effectController = {
-		isolation: 720,
-		resolution: 32,
-		subtract: 32,
-		strength: 4.3
-	}
+	gui.add(effectController, "isolation", 1, 1000, 1);
+	gui.add(effectController, "resolution", 1, 50, 1);
+	gui.add(effectController, "subtract", 1, 100, 1);
+	gui.add(effectController, "strength", 1, 10, 0.1);
 
-	var is = gui.add(effectController, "isolation", 1, 1000, 1);
-	var rs = gui.add(effectController, "resolution", 1, 100, 1);
-	var sb = gui.add(effectController, "subtract", 1, 100, 1);
-	var st = gui.add(effectController, "strength", 1, 10, 0.1);
+	gui.add( this, 'showBlob', showBlob).onChange(function(value){
+	});
+
+	gui.add( this, 'showBall', showBall).onChange(function(value){
+		for(var e in phys_visuals){
+			if(value){
+				group.add(phys_visuals[e]);
+			}else{
+				group.remove(phys_visuals[e]);
+			}
+		}
+
+	});
+
+	gui.add( this, 'blobAlpha', 0, 1).onChange(function(value){
+		effect.material.opacity = value;
+	})
 
 }
 
@@ -250,6 +286,20 @@ var heavyObjBodies =[];
 var heavyObjMeshes = [];
 
 function createHeavyObj(){
+
+	//find outbound balls
+	var range = areaRange*2;
+	var j = 0;
+	for(var i=0, l=phys_visuals.length; i<l; i++){
+		var b = phys_visuals[i];
+		var p = b.position;
+		if( p.x>range || p.x<-range || p.z>range || p.z<-range ){
+			// p.set(0,300,0);
+			phys_bodies[i].setPosition(0,j++*20+200,0);
+		}
+	}
+
+
 
 	if(heavyObjBodies.length>4){
 		group.remove(heavyObjMeshes.shift());
@@ -298,18 +348,14 @@ function updateCubes(){
 	var l = phys_bodies.length - 1;
 	for (var i = l; i >= 0; i--) {
 		var pos = phys_bodies[i].getPosition(phys_visuals[i].position);
-		var ort = phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
-		effect.addBall(pos.x/200+0.5, (pos.y+0)/200, pos.z/200+0.5, strength, subtract);
+		// var pos = phys_bodies[i].getPosition(phys_visuals[i].position);
+		// var ort = phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
+		// effect.addBall(pos.x/200+0.5, (pos.y+0)/200, pos.z/200+0.5, strength, subtract);
+		effect.addBall(pos.x/400+0.5, (pos.y+0)/400, pos.z/400+0.5, strength, subtract);
 		//effect.addBall(1., 10, 10, strength, subtract);
 	}
 	effect.addPlaneY( 2, effectController.subtract);
 
-		// var l = phys_bodies.length - 1;
-		// for (var i = l; i >= 0; i--) {
-		// 	if(phys_bodies[i].getPosition().y<-300) phys_bodies[i].setPosition(0,300,0);
-		// 	phys_bodies[i].getPosition(phys_visuals[i].position);
-		// 	phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
-		// };
 
 }
 
@@ -320,22 +366,35 @@ function update(){
 
 	//camera
 	cr += mousex*0.000025;
-	camera.position.y += ( -mousey/5 + 100 - camera.position.y)*0.02;
-	camera.position.x = 300*Math.cos(cr);
-	camera.position.z = 300*Math.sin(cr);
+	camera.position.y += ( -mousey/5 + 150 - camera.position.y)*0.02;
+	camera.position.x = 400*Math.cos(cr);
+	camera.position.z = 400*Math.sin(cr);
 	camera.lookAt(cameraTarget.position);
+	camera.updateMatrix();
 	
 	//Physics
 	if (!world.paused) {
+
 		world.step(1.0/60.0);
 
-		updateCubes();
+		if(showBlob) {updateCubes()} else {effect.reset();}
+
+		//render balls
+		if(showBall){
+			var l = phys_bodies.length - 1;
+			for (var i = l; i >= 0; i--) {
+				if(phys_bodies[i].getPosition().y<-300) phys_bodies[i].setPosition(0,300,0);
+				phys_bodies[i].getPosition(phys_visuals[i].position);
+				phys_visuals[i].updateMatrix();
+				// phys_bodies[i].getOrientation(phys_visuals[i].quaternion);
+			};
+		}
 
 
 		//heavyObj
 		for (var i = heavyObjBodies.length - 1; i >= 0; i--) {
 			heavyObjBodies[i].getPosition( heavyObjMeshes[i].position );
-			heavyObjBodies[i].getOrientation( heavyObjMeshes[i].quaternion );
+			// heavyObjBodies[i].getOrientation( heavyObjMeshes[i].quaternion );
 		};
 
 

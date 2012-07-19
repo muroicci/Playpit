@@ -342,7 +342,7 @@ function createScene() {
 	//Marching Cubes
 	metaballController = {
 		isolation: 2300,
-		resolution: 28,
+		resolution: 32,
 		subtract: 30,
 		strength: 2.05
 	}
