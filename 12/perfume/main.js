@@ -12,8 +12,19 @@ var trackball;
 var material;
 
 var metaballs = [];
-var metaballController;
-var metaballFieldSize = 120;
+var metaballFieldSize = 100;
+
+var	metaballController = {
+		isolation: 250,
+		resolution: 32,
+		subtract: 30,
+		strength: 1//2.05
+		// isolation: 80,
+		// resolution: 28,
+		// subtract: 30,
+		// strength: 1//2.05
+	}
+
 
 var SHADOW_MAP_WIDTH = 2048;
 var SHADOW_MAP_HEIGHT = 2048;
@@ -253,6 +264,12 @@ function loadBVHData(url) {
 
 
 function parseNode(data) {
+
+	//for debug
+	// var sphereMesh = new THREE.Mesh(
+	// 	new THREE.SphereGeometry(10, 12, 12), new THREE.MeshBasicMaterial({color:0xffffff})
+	// 	)
+
 	var done, geometry, i, material, n, node, t;
 	node = new THREE.Object3D();
 	node.name = data.shift();
@@ -279,6 +296,9 @@ function parseNode(data) {
 		case 'End':
 			nodes[0].push(node);
 			node.add(this.parseNode(data));
+
+			// node.add(sphereMesh)
+
 			break;
 		case '}':
 			done = true;
@@ -325,34 +345,26 @@ function createScene() {
 		metal:true
 	});
 
-	//material = new THREE.MeshLambertMaterial( { color: 0xffffff, envMap: reflectionCube, refractionRatio: 0.1 } );
-	//material = new THREE.MeshLambertMaterial( { color: 0xffffff, envMap: reflectionCube } )
-	//material = new THREE.MeshPhongMaterial( { color: 0x000000, specular: 0xffffff, envMap: reflectionCube, combine: THREE.MixOperation, reflectivity: 0.3, perPixel: true, metal: true } );
-	//material = new THREE.MeshPhongMaterial( { color: 0x550000, specular: 0x440000, envMap: reflectionCube, combine: THREE.MixOperation, reflectivity: 0.3, perPixel: true, metal: true } );
 	//ground
 	var geometry = new THREE.PlaneGeometry(10000, 10000);
 	var ground = new THREE.Mesh(geometry, material);
 	ground.castShadow = true;
 	ground.receiveShadow = true;
-	ground.rotation.x = -Math.PI / 2;
-	ground.position.y = 0;
+	// ground.position.y = -metaballFieldSize/2;
 	group.add(ground);
 
+	//test box
+	// box = new THREE.Mesh(new THREE.CubeGeometry(metaballFieldSize*2,metaballFieldSize*2, metaballFieldSize*2, 1,1))
+	// group.add(box)
 
 	//Marching Cubes
-	metaballController = {
-		isolation: 2300,
-		resolution: 32,
-		subtract: 30,
-		strength: 2.05
-	}
 
 	//gui
-	// gui = new DAT.GUI();
-	// var is = gui.add(metaballController, "isolation", 0, 24000, 1);
-	// var rs = gui.add(metaballController, "resolution", 8, 128, 1);
-	// var sb = gui.add(metaballController, "subtract", 1, 30, 1);
-	// var st = gui.add(metaballController, "strength", 1, 5, 0.01);
+	gui = new DAT.GUI();
+	gui.add(metaballController, "isolation", 0, 2400, 1);
+	gui.add(metaballController, "resolution", 8, 128, 1);
+	gui.add(metaballController, "subtract", 1, 30, 1);
+	gui.add(metaballController, "strength", 1, 5, 0.01);
 
 	//mute
 	$("#mute").click(mute);
@@ -383,6 +395,8 @@ function createBlob(root) {
 	mb.position = root.position;
 	mb.scale.set(metaballFieldSize, metaballFieldSize, metaballFieldSize);
 	group.add(mb);
+
+	// box.position = root.position;
 
 }
 
@@ -459,19 +473,23 @@ function updateBlobs(i) {
 		metaballs[i].init(metaballController.resolution);
 	}
 
+	var excludes = ["Chest1", "Chest2", "Neck"];
+	var addBlobs = ["RightAnkle", "LeftAnkle", "RightWrist", "LeftWrist"];
+
 	var subtract = metaballController.subtract;
 	var strength = metaballController.strength / ((Math.sqrt(nodes.length) - 1) / 4 + 1);
 	var nlen = nodes[i].length;
 	for (var _i = 0; _i < nlen; _i++) {
-		var wVec = new THREE.Vector3(nodes[i][_i].matrixWorld.n14, nodes[i][_i].matrixWorld.n24, nodes[i][_i].matrixWorld.n34);
-		var px = (wVec.x - roots[i].position.x) / (metaballFieldSize * 2) + 0.5;
-		var py = (wVec.y - roots[i].position.y) / (metaballFieldSize * 2) + 0.5;
-		var pz = (wVec.z - roots[i].position.z) / (metaballFieldSize * 2) + 0.5;
+
+		var wVec = nodes[i][_i].matrixWorld.getPosition(); //new THREE.Vector3(roots[i].matrixWorld.n14, roots[i].matrixWorld.n24, roots[i].matrixWorld.n34);
+		var bp = roots[i].position.clone();
+		wVec.subSelf(bp);
+
+		var px = wVec.x / (metaballFieldSize)*0.5 + 0.5;
+		var py = wVec.y / (metaballFieldSize)*0.5 + 0.5;
+		var pz = wVec.z / (metaballFieldSize)*0.5 + 0.5;
 
 		var nName = nodes[i][_i].name;
-
-		var excludes = ["Chest1", "Chest2", "Neck"];
-		var addBlobs = ["RightAnkle", "LeftAnkle", "RightWrist", "LeftWrist"];
 
 		if (excludes.indexOf(nName) == -1) metaballs[i].addBall(px, py, pz, strength, subtract);
 
@@ -482,7 +500,7 @@ function updateBlobs(i) {
 
 		//add more blobs around knees and ankles
 		if (nName == "RightKnee" || nName == "LeftKnee" || nName == "RightAnkle" || nName == "LeftAnkle") {
-			var wVecP = new THREE.Vector3(nodes[i][_i - 1].matrixWorld.n14, nodes[i][_i - 1].matrixWorld.n24, nodes[i][_i - 1].matrixWorld.n34);
+			var wVecP = nodes[i][_i - 1].matrixWorld.getPosition(); //new THREE.Vector3(nodes[i][_i - 1].matrixWorld.n14, nodes[i][_i - 1].matrixWorld.n24, nodes[i][_i - 1].matrixWorld.n34);
 			var vec = wVec.lerpSelf(wVecP, 0.5);
 			px = (vec.x - roots[i].position.x) / (metaballFieldSize * 2) + 0.5;
 			py = (vec.y - roots[i].position.y) / (metaballFieldSize * 2) + 0.5;
@@ -492,9 +510,7 @@ function updateBlobs(i) {
 
 
 	}
-	metaballs[i].addPlaneY(50, 12);
-
-	metaballs[i].position = roots[i].position;
+	metaballs[i].addPlaneY(1, 12);
 
 	if (++currentFrames[i] >= numFrames[i]) currentFrames[i] = 0;
 

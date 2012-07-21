@@ -85,7 +85,7 @@
 				group.add(mesh);
 				
 				//line
-				lineGeometry.vertices.push(new THREE.Vertex(pPos[i]));
+				lineGeometry.vertices.push(pPos[i]);
 			}
 			
 			line = new THREE.Line(lineGeometry, lineMat, THREE.LinePieces);
@@ -130,6 +130,7 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
+			camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -311,8 +312,8 @@
 				for(j=i+1; j<particleNum; j++){
 					var dist = pPos[j].distanceTo(ps);
 					if(dist<50) {
-						vertices.push( new THREE.Vertex(ps.clone()));
-						vertices.push( new THREE.Vertex(pPos[j].clone()));
+						vertices.push( ps.clone());
+						vertices.push( pPos[j].clone());
 					}
 				}
 				

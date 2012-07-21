@@ -1,29 +1,8 @@
-/**
- * Copyright (c) 2012 cannon.js Authors
- * 
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+/*global CANNON:true */
 
 /**
  * @class CANNON.Demo
- * @brief Demo framework class.
+ * @brief Demo framework class. If you want to learn how to connect Cannon.js with Three.js, please look at the examples/ instead.
  */
 CANNON.Demo = function(){
 
@@ -31,28 +10,41 @@ CANNON.Demo = function(){
   this.settings = {
     gx:0.0,
     gy:0.0,
-    gz:-10.0,
+    gz:0.0,
     iterations:3,
     scene:0,
     paused:false,
     rendermode:0,
     contacts:false,  // Contact points
-    cm2contact:false // center of mass to contact points
+    cm2contact:false, // center of mass to contact points
+    normals:false, // contact normals
+    axes:false // "local" frame axes
   };
 
   this._phys_bodies = [];
   this._phys_visuals = [];
-  this._phys_startpositions = [];
-  this._phys_startrot = [];
-  this._phys_startvelocities = [];
-  this._phys_startrotvelo = [];
   this._scenes = [];
   this._gui = null;
+
+  /**
+   * @property bool paused
+   * @memberof CANNON.Demo
+   * @brief Controls if the simulation runs or not
+   */
   this.paused = false;
+
+  /**
+   * @property float timestep
+   * @memberof CANNON.Demo
+   */
   this.timestep = 1.0/60.0;
   this.shadowsOn = true;
   this._contactmeshes = [];
+  this._normallines = [];
   this._contactlines = [];
+  this._axes = [];
+
+  this.three_contactpoint_geo = new THREE.SphereGeometry( 0.1, 6, 6);
 
   // Material
   this.materialColor = 0xdddddd;
@@ -132,7 +124,7 @@ CANNON.Demo.prototype.renderMode = function(mode){
  * @fn addScene
  * @memberof CANNON.Demo
  * @brief Add a scene to the demo app
- * @param function initfunc
+ * @param function A function that takes one argument, app, and initializes a physics scene. The function runs app.setWorld(body), app.addVisual(body), app.removeVisual(body) etc.
  */
 CANNON.Demo.prototype.addScene = function(initfunc){
   this._scenes.push(initfunc);
@@ -145,19 +137,10 @@ CANNON.Demo.prototype.addScene = function(initfunc){
  */
 CANNON.Demo.prototype.restartCurrentScene = function(){
   for(var i=0; i<this._phys_bodies.length; i++){
-    this._phys_bodies[i].setPosition(this._phys_startpositions[i].x,
-				     this._phys_startpositions[i].y,
-				     this._phys_startpositions[i].z);
-    this._phys_bodies[i].setVelocity(this._phys_startvelocities[i].x,
-				     this._phys_startvelocities[i].y,
-				     this._phys_startvelocities[i].z);
-    this._phys_bodies[i].setAngularVelocity(this._phys_startrotvelo[i].x,
-					    this._phys_startrotvelo[i].y,
-					    this._phys_startrotvelo[i].z);
-    this._phys_bodies[i].setOrientation(this._phys_startrot[i].x,
-					this._phys_startrot[i].y,
-					this._phys_startrot[i].z,
-					this._phys_startrot[i].w);
+    this._phys_bodies[i].initPosition.copy(this._phys_bodies[i].position);
+    this._phys_bodies[i].initVelocity.copy(this._phys_bodies[i].velocity);
+    this._phys_bodies[i].initAngularVelocity.copy(this._phys_bodies[i].angularVelocity);
+    this._phys_bodies[i].initQuaternion.copy(this._phys_bodies[i].quaternion);
   }
 };
 
@@ -170,52 +153,51 @@ CANNON.Demo.prototype.updateVisuals = function(){
   
   // Read position data into visuals
   for(var i=0; i<this._phys_bodies.length; i++){
-    this._phys_bodies[i].getPosition(this._phys_visuals[i].position);
-    this._phys_bodies[i].getOrientation(this._phys_visuals[i].quaternion);
+    this._phys_bodies[i].position.copy(this._phys_visuals[i].position);
+    this._phys_bodies[i].quaternion.copy(this._phys_visuals[i].quaternion);
   }
   
   // Render contacts
   if(this.settings.contacts){
 
     // Add new
-    var sphere_geometry = new THREE.SphereGeometry( 0.1, 6, 6);
+    var sphere_geometry = this.three_contactpoint_geo;
     var numadded = 0;
     var old_meshes = this._contactmeshes;
+    var old_normal_meshes = this._normalmeshes;
     this._contactmeshes = [];
     for(var ci in this._world.contacts){
-      for(var k=0; k<this._world.contacts[ci].length; k++){
-	var ij = ci.split(",");
-	var i=parseInt(ij[0]), j=parseInt(ij[1]), mesh_i, mesh_j;
-	if(numadded<old_meshes.length){
-	  // Get mesh from prev timestep
-	  mesh_i = old_meshes[numadded];
-	} else {
-	  // Create new mesh
-	  mesh_i = new THREE.Mesh( sphere_geometry, this.contactDotMaterial );
-	  this._scene.add(mesh_i);
-	}
-	this._contactmeshes.push(mesh_i);
-	numadded++;
-
-	if(numadded<old_meshes.length){
-	  // Get mesh from prev timestep
-	  mesh_j = old_meshes[numadded];
-	} else {
-	  // Create new mesh
-	  mesh_j = new THREE.Mesh( sphere_geometry, this.contactDotMaterial );
-	  this._scene.add(mesh_j);
-	}
-	this._contactmeshes.push(mesh_j);
-	numadded++;
-
-	mesh_i.position.x = this._world.x[i] + this._world.contacts[ci][k].ri.x;
-	mesh_i.position.y = this._world.y[i] + this._world.contacts[ci][k].ri.y;
-	mesh_i.position.z = this._world.z[i] + this._world.contacts[ci][k].ri.z;
-
-	mesh_j.position.x = this._world.x[j] + this._world.contacts[ci][k].rj.x;
-	mesh_j.position.y = this._world.y[j] + this._world.contacts[ci][k].rj.y;
-	mesh_j.position.z = this._world.z[j] + this._world.contacts[ci][k].rj.z;
+      var c = this._world.contacts[ci];
+      var bi=c.bi, bj=c.bj, mesh_i, mesh_j;
+      if(numadded<old_meshes.length){
+	// Get mesh from prev timestep
+	mesh_i = old_meshes[numadded];
+      } else {
+	// Create new mesh
+	mesh_i = new THREE.Mesh( sphere_geometry, this.contactDotMaterial );
+	this._scene.add(mesh_i);
       }
+      this._contactmeshes.push(mesh_i);
+      numadded++;
+      
+      if(numadded<old_meshes.length){
+	// Get mesh from prev timestep
+	mesh_j = old_meshes[numadded];
+      } else {
+	// Create new mesh
+	mesh_j = new THREE.Mesh( sphere_geometry, this.contactDotMaterial );
+	this._scene.add(mesh_j);
+      }
+      this._contactmeshes.push(mesh_j);
+      numadded++;
+      
+      mesh_i.position.x = bi.position.x + c.ri.x;
+      mesh_i.position.y = bi.position.y + c.ri.y;
+      mesh_i.position.z = bi.position.z + c.ri.z;
+      
+      mesh_j.position.x = bj.position.x + c.rj.x;
+      mesh_j.position.y = bj.position.y + c.rj.y;
+      mesh_j.position.z = bj.position.z + c.rj.z;
     }
 
     // Remove overflowing
@@ -240,35 +222,32 @@ CANNON.Demo.prototype.updateVisuals = function(){
     this._contactlines = [];
 
     for(var ci in this._world.contacts){
-      for(var k=0; k<this._world.contacts[ci].length; k++){
-	var ij = ci.split(",");
-	var i=parseInt(ij[0]), j=parseInt(ij[1]);
-	var line, geometry;
+      var c = this._world.contacts[ci];
+      var bi=c.bi, bj=c.bj, mesh_i, mesh_j;
+      var i=bi.id, j=bj.id;
+      var line, geometry;
 
-	for(var l=0; l<2; l++){
-	  if(old_lines.length){
-	    // Get mesh from prev timestep
-	    line = old_lines.pop();
-	    geometry = line.geometry;
-	    geometry.vertices.pop();
-	    geometry.vertices.pop();
-	  } else {
-	    // Create new mesh
-	    geometry = new THREE.Geometry();
-	    geometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,0,0)));
-	    geometry.vertices.push(new THREE.Vertex(new THREE.Vector3(1,1,1)));
-	    line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );
-	    this._scene.add(line);
-	  }
-	  this._contactlines.push(line);
-	  var r = l==0 ? this._world.contacts[ci][k].ri : this._world.contacts[ci][k].rj;
-	  var pos_idx = l==0 ? i : j;
-	  line.scale = new THREE.Vector3(r.x,r.y,r.z);
-	  line.position.set(this._world.x[pos_idx],
-			    this._world.y[pos_idx],
-			    this._world.z[pos_idx]);
+      for(var l=0; l<2; l++){
+	if(old_lines.length){
+	  // Get mesh from prev timestep
+	  line = old_lines.pop();
+	  geometry = line.geometry;
+	  geometry.vertices.pop();
+	  geometry.vertices.pop();
+	} else {
+	  // Create new mesh
+	  geometry = new THREE.Geometry();
+	  geometry.vertices.push(new THREE.Vector3(0,0,0));
+	  geometry.vertices.push(new THREE.Vector3(1,1,1));
+	  line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );
 	  this._scene.add(line);
 	}
+	this._contactlines.push(line);
+	var r = l==0 ? c.ri : c.rj;
+	var b = l==0 ? bi : bj;
+	line.scale.set(r.x,r.y,r.z);
+	b.position.copy(line.position);
+	this._scene.add(line);
       }
     }
 
@@ -282,6 +261,92 @@ CANNON.Demo.prototype.updateVisuals = function(){
     for(var i=0; i<this._contactlines.length; i++)
       this._scene.remove(this._contactlines[i]);
 
+  }
+
+  // Normal lines
+  if(this.settings.normals){
+    var old_lines = this._normallines;
+    this._normallines = [];
+    for(var ci in this._world.contacts){
+      var c = this._world.contacts[ci];
+      var bi=c.bi, bj=c.bj, mesh;
+      var i=bi.id, j=bj.id;
+      var line, geometry;
+      if(old_lines.length){
+	// Get mesh from prev timestep
+	line = old_lines.pop();
+	geometry = line.geometry;
+	geometry.vertices.pop();
+	geometry.vertices.pop();
+      } else {
+	// Create new mesh
+	geometry = new THREE.Geometry();
+	geometry.vertices.push(new THREE.Vector3(0,0,0));
+	geometry.vertices.push(new THREE.Vector3(1,1,1));
+	line = new THREE.Line( geometry, new THREE.LineBasicMaterial({color:0x00ff00}));
+	this._scene.add(line);
+      }
+      this._normallines.push(line);
+      var n = c.ni;
+      var b = bi;
+      line.scale.set(n.x,n.y,n.z);
+      b.position.copy(line.position);
+      c.ri.vadd(line.position,line.position);
+      this._scene.add(line);
+    }
+
+    // Remove overflowing
+    while(old_lines.length)
+      this._scene.remove(old_lines.pop());
+  } else if(this._normallines.length){
+    // Remove all contact lines
+    for(var i=0; i<this._normallines.length; i++)
+      this._scene.remove(this._normallines[i]);
+  }
+
+  // Frame axes for each body
+  if(this.settings.axes){
+    var old_axes = this._axes;
+    this._axes = [];
+    for(var bi in this._world.bodies){
+      var b = this._world.bodies[bi], mesh;
+      if(old_axes.length){
+	// Get mesh from prev timestep
+	mesh = old_axes.pop();
+      } else {
+	// Create new mesh
+	mesh = new THREE.Object3D();
+	mesh.useQuaternion = true;
+	var origin = new THREE.Vector3(0,0,0);
+	var gX = new THREE.Geometry();
+	var gY = new THREE.Geometry();
+	var gZ = new THREE.Geometry();
+	gX.vertices.push(origin);
+	gY.vertices.push(origin);
+	gZ.vertices.push(origin);
+	gX.vertices.push(new THREE.Vector3(1,0,0));
+	gY.vertices.push(new THREE.Vector3(0,1,0));
+	gZ.vertices.push(new THREE.Vector3(0,0,1));
+	var lineX = new THREE.Line( gX, new THREE.LineBasicMaterial({color:0xff0000}));
+	var lineY = new THREE.Line( gY, new THREE.LineBasicMaterial({color:0x00ff00}));
+	var lineZ = new THREE.Line( gZ, new THREE.LineBasicMaterial({color:0x0000ff}));
+	mesh.add(lineX);
+	mesh.add(lineY);
+	mesh.add(lineZ);
+      }
+      b.position.copy(mesh.position);
+      b.quaternion.copy(mesh.quaternion);
+      this._axes.push(mesh);
+      this._scene.add(mesh);
+    }
+
+    // Remove overflowing
+    while(old_axes.length)
+      this._scene.remove(old_axes.pop());
+  } else if(this._axes.length){
+    // Remove all contact lines
+    for(var i=0; i<this._axes.length; i++)
+      this._scene.remove(this._axes[i]);
   }
 };
 
@@ -410,8 +475,8 @@ CANNON.Demo.prototype.start = function(){
   function animate(){
     requestAnimationFrame( animate );
     if(!that.paused){
-      updatePhysics();
       that.updateVisuals();
+      updatePhysics();
     }
     render();
     stats.update();
@@ -455,15 +520,33 @@ CANNON.Demo.prototype.start = function(){
 	case 32: // Space - restart
 	that.restartCurrentScene();
 	break;
+
 	case 112: // p
 	that.paused = !that.paused;
 	that.settings.paused = that.paused;
 	that._updategui();
 	break;
+
 	case 115: // s
 	updatePhysics();
 	that.updateVisuals();
 	break;
+
+	case 49:
+	case 50:
+	case 51:
+	case 52:
+	case 53:
+	case 54:
+	case 55:
+	case 56:
+	case 57:
+	  // Change scene
+	  // Only for numbers 1-9 and if no input field is active
+	  if(that._scenes.length > e.keyCode-49 && !document.activeElement.localName.match(/input/))
+	    that._changeScene(e.keyCode-49);
+	break;
+	
 	}
       }
     });
@@ -479,31 +562,34 @@ CANNON.Demo.prototype.start = function(){
     rf.add(that.settings,'contacts').onChange(function(contacts){
 	// Do nothing... contacts are dynamically added/removed for each frame
       });
-    rf.add(that.settings,'cm2contact').onChange(function(cm2contact){
-	
-      });
+    rf.add(that.settings,'cm2contact').onChange(function(cm2contact){});
+    rf.add(that.settings,'normals').onChange(function(normals){});
+    rf.add(that.settings,'axes').onChange(function(axes){});
 
     // World folder
     var wf = that._gui.addFolder('World');
-    wf.add(that.settings, 'gx').step(1).onChange(function(gx){
-	that._world.gravity(new CANNON.Vec3(gx,that.settings.gy,that.settings.gz));
+    // Pause
+    wf.add(that.settings,'paused').onChange(function(p){
+	that.paused = p;
       });
-    wf.add(that.settings, 'gy').step(1).onChange(function(gy){
-	that._world.gravity(new CANNON.Vec3(that.settings.gx,gy,that.settings.gz));
+      var maxg = 100;
+    wf.add(that.settings, 'gx',-maxg,maxg).onChange(function(gx){
+	if(!isNaN(gx))
+	  that._world.gravity.set(gx,that.settings.gy,that.settings.gz);
       });
-    wf.add(that.settings, 'gz').step(1).onChange(function(gz){
-	that._world.gravity(new CANNON.Vec3(that.settings.gx,that.settings.gy,gz));
+    wf.add(that.settings, 'gy',-maxg,maxg).onChange(function(gy){
+	if(!isNaN(gy))
+	  that._world.gravity.set(that.settings.gx,gy,that.settings.gz);
+      });
+    wf.add(that.settings, 'gz',-maxg,maxg).onChange(function(gz){
+	if(!isNaN(gz))
+	  that._world.gravity.set(that.settings.gx,that.settings.gy,gz);
       });
 
     // Solver folder
     var sf = that._gui.addFolder('Solver');
-    sf.add(that.settings, 'iterations').min(1).step(1).onChange(function(it){
-	that._world.solver.iter = it;
-      });
-
-    // Pause
-    wf.add(that.settings,'paused').onChange(function(p){
-	that.paused = p;
+      sf.add(that.settings, 'iterations',1,50).step(1).onChange(function(it){
+	that._world.solver.iterations = it;
       });
 
     // Scene picker
@@ -511,13 +597,17 @@ CANNON.Demo.prototype.start = function(){
     for(var i=0; i<that._scenes.length; i++)
       scenes[(i+1)+'. Scene '+(i+1)] = i;
     that._gui.add(that.settings,'scene',scenes).onChange(function(sceneNumber){
-	that.paused = false;
-	that.settings.paused = false;
-	that._updategui();
-	that._buildScene(sceneNumber);
+	that._changeScene(sceneNumber);
       });
   }
 };
+
+CANNON.Demo.prototype._changeScene = function(n){
+  this.paused = false;
+  this.settings.paused = false;
+  this._updategui();
+  this._buildScene(n);
+}
 
 /**
  * @private
@@ -535,10 +625,6 @@ CANNON.Demo.prototype._buildScene = function(n){
   var num = that._phys_visuals.length;
   for(var i=0; i<num; i++){
     that._phys_bodies.pop();
-    that._phys_startpositions.pop();
-    that._phys_startvelocities.pop();
-    that._phys_startrotvelo.pop();
-    that._phys_startrot.pop();
     var mesh = that._phys_visuals.pop();
     that._scene.remove(mesh);
   }
@@ -558,9 +644,9 @@ CANNON.Demo.prototype._buildScene = function(n){
       mesh = new THREE.Object3D();
       var submesh = new THREE.Object3D();
       var subsubmesh = new THREE.Object3D();
-
       var ground = new THREE.Mesh( geometry, that.currentMaterial );
       ground.scale = new THREE.Vector3(100,100,100);
+      ground.rotation.x = Math.PI/2;
       subsubmesh.add(ground);
       var n = shape.normal.copy();
 
@@ -581,6 +667,17 @@ CANNON.Demo.prototype._buildScene = function(n){
     case CANNON.Shape.types.BOX:
       var box_geometry = new THREE.CubeGeometry( shape.halfExtents.x*2, shape.halfExtents.y*2, shape.halfExtents.z*2 );
       mesh = new THREE.Mesh( box_geometry, that.currentMaterial );
+      break;
+
+    case CANNON.Shape.types.CONVEXPOLYHEDRON:
+      var verts = [];
+      for(var i=0; i<shape.vertices.length; i++){
+	verts.push(new THREE.Vector3(shape.vertices[i].x,
+				     shape.vertices[i].y,
+				     shape.vertices[i].z));
+      }
+      var geo = new THREE.ConvexGeometry( verts );
+      mesh = new THREE.Mesh( geo, that.currentMaterial );
       break;
 
     case CANNON.Shape.types.COMPOUND:
@@ -635,35 +732,13 @@ CANNON.Demo.prototype._buildScene = function(n){
 
       addVisual:function(body){
 	// What geometry should be used?
-	var mesh = shape2mesh(body._shape);
+	var mesh = shape2mesh(body.shape);
 	if(mesh) {
-
-	  // Shadows on?
-	    /*
-	  if(that.shadowsOn){
-	    mesh.castShadow = true;
-	    mesh.receiveShadow = true;
-	    if(mesh.children)
-	      for(var i=0; i<mesh.children.length; i++){
-		mesh.children[i].castShadow = true;
-		mesh.children[i].receiveShadow = true;
-		if(body._shape.type==CANNON.Shape.types.BOX)
-		  mesh.children[i].receiveShadow = false;
-	      }
-	  }
-	  if(that.shadowsOn && body._shape.type==CANNON.Shape.types.BOX)
-	    mesh.receiveShadow = false;
-	    */
-
 	  // Add body
 	  that._phys_bodies.push(body);
 	  that._phys_visuals.push(mesh);
-	  that._phys_startpositions.push(body.getPosition());
-	  that._phys_startvelocities.push(body.getVelocity());
-	  that._phys_startrot.push(body.getOrientation());
-	  that._phys_startrotvelo.push(body.getAngularVelocity());
 	  body.visualref = mesh;
-	  body.visualref.visualId = that._phys_startpositions.length - 1;
+	  body.visualref.visualId = that._phys_bodies.length - 1;
 	  mesh.useQuaternion = true;
 	  that._scene.add(mesh);
 	}
@@ -671,29 +746,17 @@ CANNON.Demo.prototype._buildScene = function(n){
 
       removeVisual:function(body){
 	if(body.visualref!=undefined){
-	  var old_sp = [];
-	  var old_sq = [];
-	  var old_sv = [];
-	  var old_sw = [];
 	  var old_b = [];
 	  var old_v = [];
-	  var n = that._phys_startpositions.length;
+	  var n = that._phys_bodies.length;
 	  for(var i=0; i<n; i++){
 	    old_b.unshift(that._phys_bodies.pop());
 	    old_v.unshift(that._phys_visuals.pop());
-	    old_sp.unshift(that._phys_startpositions.pop());
-	    old_sv.unshift(that._phys_startvelocities.pop());
-	    old_sw.unshift(that._phys_startrotvelo.pop());
-	    old_sq.unshift(that._phys_startrot.pop());
 	  }
 	  var id = body.visualref.visualId;
-	  for(var j=0; j<old_sp.length; j++){
+	  for(var j=0; j<old_b.length; j++){
 	    if(j!=id){
 	      var i = j>id ? j-1 : j;
-	      that._phys_startpositions[i] = old_sp[j];
-	      that._phys_startvelocities[i] = old_sv[j];
-	      that._phys_startrotvelo[i] = old_sw[j];
-	      that._phys_startrot[i] = old_sq[j];
 	      that._phys_bodies[i] = old_b[j];
 	      that._phys_visuals[i] = old_v[j];
 	      that._phys_bodies[i].visualref = old_b[j].visualref;
@@ -712,9 +775,9 @@ CANNON.Demo.prototype._buildScene = function(n){
     });
 
   // Read the newly set data to the gui
-  that.settings.iterations = that._world.solver.iter;
-  that.settings.gx = that._world._gravity.x;
-  that.settings.gy = that._world._gravity.y;
-  that.settings.gz = that._world._gravity.z;
+  that.settings.iterations = that._world.solver.iterations;
+  that.settings.gx = that._world.gravity.x+0.0;
+  that.settings.gy = that._world.gravity.y+0.0;
+  that.settings.gz = that._world.gravity.z+0.0;
   that._updategui();
 };

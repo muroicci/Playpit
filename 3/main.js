@@ -53,7 +53,7 @@
 			for( var i=0; i<particleNum; i++){
 				pVectors[i] = new THREE.Vector3(0,0,0);
 				vVectors[i] = new THREE.Vector3( Math.random()*Math.PI/4, Math.random()*Math.PI/4, Math.random()*Math.PI/4);
-				geometry.vertices.push( new THREE.Vertex(pVectors[i]) );
+				geometry.vertices.push( pVectors[i] );
 			}
 			
 			particles = new THREE.ParticleSystem( geometry, material );
@@ -65,9 +65,9 @@
 			window.addEventListener('resize', resize, false);
 			
 			//stats
-			stats = new Stats();
-			stats.domElement.style.position = 'absolute';
-			stats.domElement.style.top = '0px';
+			// stats = new Stats();
+			// stats.domElement.style.position = 'absolute';
+			// stats.domElement.style.top = '0px';
 //			container.appendChild( stats.domElement );
 			
 			animate();
@@ -95,7 +95,7 @@
 			requestAnimationFrame(animate);
 			update();
 			render();
-			stats.update();
+			// stats.update();
 		}
 		
 		function render(){
