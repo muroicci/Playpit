@@ -1,3 +1,4 @@
+
 <html>
 <head>
 	<meta charset="UTF-8">
@@ -37,6 +38,8 @@
 
 <body>
 	<script type="text/javascript">
+
+			//need to post processing
 
 				var container, camera, scene, renderer;
 				var target, cTarget;
@@ -155,12 +158,12 @@
 						//create vectors;
 						vVectors[i] = new THREE.Vector3( 0, 0, 0);
 						particlePositions[i] = new THREE.Vector3(areaLength*(Math.random()*2-1), -200, areaLength*(Math.random()*2-1));
-						particleGeometry.vertices.push( new THREE.Vertex(particlePositions[i]));
+						particleGeometry.vertices.push( particlePositions[i]);
 
 						for( var j=0; j<strokeNum; j++){
 							oldPositions.push(new Array());
 							oldPositions[i].push(particlePositions[i].clone());
-							lineGeometry.vertices.push( new THREE.Vertex(oldPositions[i][j]) );
+							lineGeometry.vertices.push( oldPositions[i][j] ) ;
 
 							var lc = new THREE.Color( colors[i%colors.length] );
 							if(j>0){
@@ -172,6 +175,7 @@
 
 					particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 					particles.sortParticles = true;
+					particles.dynamic = true;
 					scene.add( particles );
 
 
@@ -201,7 +205,7 @@
 					stageHeight = window.innerHeight;
 					camera.aspect =  stageWidth/stageHeight;
 					renderer.setSize(stageWidth, stageHeight)
-				//	camera.updateProjectionMatrix();
+					camera.updateProjectionMatrix();
 				}
 
 				function mouseMove(ev){
@@ -227,8 +231,8 @@
 					// scene.overrideMaterial = material_depth;
 					// renderer.render( scene, camera, rtTextureDepth, true);
 					// renderer.render( scene, camera);
-					composerScene.render();
-					//renderer.render(scene, camera)
+					// composerScene.render();
+					renderer.render(scene, camera)
 
 
 				}
@@ -268,6 +272,8 @@
 					t1+=0.024;
 					t2+=0.008;
 
+					particles.geometry.verticesNeedUpdate = true;
+
 					for(var i=0; i<particleNum; i++){
 
 						var ptcl = particleGeometry.vertices[i];
@@ -298,8 +304,8 @@
 							oldPositions[i].pop();
 
 							for( var j=0; j<strokeNum-1; j++){
-								vertices.push( new THREE.Vertex( oldPositions[i][j] ) );
-								vertices.push( new THREE.Vertex( oldPositions[i][j+1] ) );
+								vertices.push( oldPositions[i][j] );
+								vertices.push( oldPositions[i][j+1] );
 							}
 						}
 

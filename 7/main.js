@@ -87,14 +87,14 @@
 				pVectors[i] = new THREE.Vector2(0.5*Math.random()*pi, 0.5*Math.random()*pi);
 				vVectors[i] = new THREE.Vector2( 0, 0);
 				pPos[i] = new THREE.Vector3(sphereR*Math.sin(pVectors[i].y)*Math.cos(pVectors[i].x), sphereR*Math.sin(pVectors[i].y)*Math.sin(pVectors[i].x), sphereR*Math.cos(pVectors[i].y));
-				particleGeometry.vertices.push( new THREE.Vertex(pPos[i]));
+				particleGeometry.vertices.push( pPos[i]);
 				rpVectors[i] = sphereR;
 				rvVectors[i] = 0;
 				
 				for( var j=0; j<strokeNum; j++){
 					oPos.push(new Array());
 					oPos[i].push(pPos[i].clone());
-					lineGeometry.vertices.push( new THREE.Vertex(oPos[i][j]) );
+					lineGeometry.vertices.push( oPos[i][j] );
 					
 					if(j>0){
 						//colors
@@ -110,6 +110,7 @@
 			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
+			particles.dynamic = true;
 			scene.add( particles );
 			
 
@@ -157,7 +158,7 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
-			// camera.updateProjectionMatrix();
+			camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -203,6 +204,8 @@
 				lineGeometry = new THREE.Geometry();
 			}
 			
+			particles.geometry.verticesNeedUpdate = true;
+
 			for(var i=0; i<particleNum; i++){
 				
 				var ptcl = particleGeometry.vertices[i];
@@ -254,22 +257,25 @@
 				
 				//rotation
 				var mtr = new THREE.Matrix4();
-				mtr.setRotationX( p.x );
+				mtr.rotateX( p.x );
 				var mtrr = new THREE.Matrix4();
-				mtrr.setRotationY( p.y );
+				mtrr.rotateY( p.y );
 				
 				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
 
 				ps = m.getPosition();
-				ptcl.position = ps.clone();
+				// ptcl.position = ps.clone();
+				particleGeometry.vertices[i] = ps.clone();
+				// ptcl.set(pps.x, pps.y, pps.z);
+
 				
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
 					oPos[i].pop();
 
 					for( var j=0; j<strokeNum-1; j++){
-						vertices.push( new THREE.Vertex( oPos[i][j] ) );
-						vertices.push( new THREE.Vertex( oPos[i][j+1] ) );
+						vertices.push( oPos[i][j] ) ;
+						vertices.push(  oPos[i][j+1] );
 					}
 				}				
 			}

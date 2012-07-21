@@ -45,14 +45,6 @@ function init(){
 	cameraTarget.position.y = 30;
 	//camera.target = cameraTarget;
 
-	//light
-    var ambient = new THREE.AmbientLight( 0x999999);
-    scene.add( ambient );
-
-	var light = new THREE.SpotLight( 0xffffff, 1);
-	light.castShadow = true;
-	light.position.set (0,600,0);
-	scene.add(light);
 
 	//renderer
 	renderer = new THREE.WebGLRenderer();
@@ -93,10 +85,19 @@ function resize(){
 function createScene(){
 
 	world = new CANNON.World();
-	world.gravity( new CANNON.Vec3(0,-250,0));
-	bp = new CANNON.NaiveBroadphase();
-	world.broadphase(bp);
-	world.iterations(2);
+	world.gravity.set(0,-250,0);
+	world.broadphase = new CANNON.NaiveBroadphase();;
+	world.iterations = 2;
+
+	//light
+    var ambient = new THREE.AmbientLight( 0x333333);
+    scene.add( ambient );
+
+	var light = new THREE.SpotLight( 0xffffff, 0.9);
+	light.castShadow = true;
+	light.position.set (0,600,0);
+	scene.add(light);
+
 	
 	//ground
 	var geometry = new THREE.PlaneGeometry(10000,10000);
@@ -104,7 +105,7 @@ function createScene(){
 	var ground = new THREE.Mesh( geometry, planeMaterial );
 	ground.castShadow = true;
 	ground.receiveShadow = true;
-	ground.rotation.x = -Math.PI/2;
+	// ground.rotation.x = -Math.PI/2;
 	group.add( ground );
 
 	var groundShape = new CANNON.Plane( new CANNON.Vec3(0,1,0));
@@ -114,25 +115,25 @@ function createScene(){
 	// plane -x
     var planeShapeXmin = new CANNON.Plane(new CANNON.Vec3(0,0,1));
     var planeXmin = new CANNON.RigidBody(0, planeShapeXmin);
-    planeXmin.setPosition(0,0,-50);
+    planeXmin.position.set(0,0,-50);
     world.add(planeXmin);
 
     // Plane +x
     var planeShapeXmax = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
     var planeXmax = new CANNON.RigidBody(0, planeShapeXmax);
-    planeXmax.setPosition(0,0,50);
+    planeXmax.position.set(0,0,50);
     world.add(planeXmax);
 
     // Plane -z
     var planeShapeYmin = new CANNON.Plane(new CANNON.Vec3(1,0,0));
     var planeYmin = new CANNON.RigidBody(0, planeShapeYmin);
-    planeYmin.setPosition(-50,0,0);
+    planeYmin.position.set(-50,0,0);
     world.add(planeYmin);
 
     // Plane +z
     var planeShapeYmax = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
     var planeYmax = new CANNON.RigidBody(0, planeShapeYmax);
-    planeYmax.setPosition(50,0,0);
+    planeYmax.position.set(50,0,0);
     world.add(planeYmax);
 
 
@@ -157,7 +158,9 @@ function createScene(){
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
-		sphereBody.setPosition(pos.x + randX, pos.y, pos.z+randZ);
+		sphereBody.position.set(pos.x + randX, pos.y, pos.z+randZ);
+		sphereMesh.position = sphereBody.position;
+		// sphereMesh.rotation = sphereBody.rotation;
 
 		balls.push({mesh:sphereMesh, body:sphereBody});
 		world.add(sphereBody);
@@ -208,13 +211,14 @@ function createHeavyObj(chr){
 	var r = 10+Math.random()*30;
 	var sphereShape = new CANNON.Sphere(r);
 	var heavyObjBody = new CANNON.RigidBody(75, sphereShape);
-	heavyObjBody.setPosition(50*(2*Math.random()-1), r/2+400,50*(2*Math.random()-1))
+	heavyObjBody.position.set(50*(2*Math.random()-1), r/2+400,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
 
 	//visual
 	var sphereGeometry = new THREE.SphereGeometry( r, 16, 16);
 	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xff8d28, specular: 0xffffff, ambient: 0xff5a16, shininess: 250, perPixel: true } );
 	var heavyObjMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
+	heavyObjMesh.position = heavyObjBody.position;
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
 	heavyObjMesh.useQuaternion = true;
@@ -222,6 +226,7 @@ function createHeavyObj(chr){
 
 	//light
 	var light = new THREE.PointLight( 0xff8d28, 1, r+50 );
+	light.position = heavyObjMesh.position;
 	scene.add(light);
 
 
@@ -252,19 +257,20 @@ function update(){
 	//Physics
 	if (!world.paused) {
 		world.step(1.0/60.0);
-		var l = balls.length - 1;
-		for (var i = l; i >= 0; i--) {
-			if(balls[i].body.getPosition().y<-300) balls[i].body.setPosition(0,300,0);
-			balls[i].body.getPosition(balls[i].mesh.position);
-			balls[i].body.getOrientation(balls[i].mesh.quaternion);
-		};
+		// var l = balls.length - 1;
+		// for (var i = l; i >= 0; i--) {
+		// 	if(balls[i].body.position.y<-300) balls[i].body.position.set(0,300,0);
+		// 	// balls[i].body.getPosition(balls[i].mesh.position);
+		// 	// balls[i].body.getOrientation(balls[i].mesh.quaternion);
+		// 	// balls[i].mesh.position = balls[i].body.position;
+		// };
 
-		//heavyObj
-		for (var i = heavyObjs.length - 1; i >= 0; i--) {
-			heavyObjs[i].body.getPosition( heavyObjs[i].mesh.position );
-			heavyObjs[i].body.getOrientation( heavyObjs[i].mesh.quaternion );
-			heavyObjs[i].light.position = heavyObjs[i].mesh.position;
-		};
+		// //heavyObj
+		// for (var i = heavyObjs.length - 1; i >= 0; i--) {
+		// 	// heavyObjs[i].body.getPosition( heavyObjs[i].mesh.position );
+		// 	// heavyObjs[i].body.getOrientation( heavyObjs[i].mesh.quaternion );
+		// 	// heavyObjs[i].light.position = heavyObjs[i].mesh.position;
+		// };
 
 
 	};

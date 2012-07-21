@@ -1,4 +1,7 @@
-		
+
+
+/////// need to revise
+
 		var container, camera, scene, renderer;
 		var target, cTarget;
 		var particleGeometry,	particles, particleMaterials;
@@ -132,14 +135,14 @@
 				pVectors[i] = new THREE.Vector2(0.5*Math.random()*pi, 0.5*Math.random()*pi);
 				vVectors[i] = new THREE.Vector2( 0, 0);
 				pPos[i] = new THREE.Vector3(sphereR*Math.sin(pVectors[i].y)*Math.cos(pVectors[i].x), sphereR*Math.sin(pVectors[i].y)*Math.sin(pVectors[i].x), sphereR*Math.cos(pVectors[i].y));
-				particleGeometry.vertices.push( new THREE.Vertex(pPos[i]));
+				particleGeometry.vertices.push( pPos[i]);
 				rpVectors[i] = sphereR;
 				rvVectors[i] = 0;
 				
 				for( var j=0; j<strokeNum; j++){
 					oPos.push(new Array());
 					oPos[i].push(pPos[i].clone());
-					lineGeometry.vertices.push( new THREE.Vertex(oPos[i][j]) );
+					lineGeometry.vertices.push( oPos[i][j] );
 					
 					var lc = new THREE.Color( colors[i%colors.length] );
 					if(j>0){
@@ -151,10 +154,12 @@
 			
 			particles = new THREE.ParticleSystem( particleGeometry, particleMaterial );
 			particles.sortParticles = true;
+			particles.dynamic = true;
 			scene.add( particles );
 			
 
 			line = new THREE.Line( lineGeometry, lineMaterial, THREE.LinePieces );
+			line.dynamic = true;
 			line.colors = lineColors;
 			scene.add( line );
 			
@@ -192,6 +197,7 @@
 			stageHeight = window.innerHeight;
 			camera.aspect =  stageWidth/stageHeight;
 			renderer.setSize(stageWidth, stageHeight)
+			camera.updateProjectionMatrix();
 		}
 		
 		function mouseMove(ev){
@@ -207,7 +213,8 @@
 			update();
 			
 			renderer.clear();
-			composerScene.render(0.1);
+			// composerScene.render(0.1);
+			renderer.render(scene, camera)
 			
 			//stats.update();
 			
@@ -232,43 +239,21 @@
 			mrx += 0.008*(mx)*pi/180; //(0.08*(mx)*pi/180 - mrx)*0.8;
 			mry += 0.008*(my)*pi/180; //(0.08*(my)*pi/180 - mry)*0.8;
 
-			//target vector
-			tVector.normalize();
-			tVector = tVector.multiplyScalar(speedMultiply*10);
-			var tmtp = new THREE.Matrix4();
-			tmtp.setPosition( tVector );
-			var tmtrx = new THREE.Matrix4();
-			tmtrx.setRotationX( -mry );
-			var tmtry = new THREE.Matrix4();
-			tmtry.setRotationY( -mrx );
+			var tVector = new THREE.Vector3(0,0,10);
+			var rotMat = new THREE.Matrix4();
+			rotMat.rotateY(-mrx);
+			rotMat.rotateX(-mry);
 
-
-			var mm = tmtrx.multiplySelf(tmtp); 
-			mm= tmtry.multiplySelf(tmtrx);
-			tVector = mm.getPosition();
- 			
-			target.position.addSelf( tVector );
-			speedMultiply += (1 - speedMultiply)*0.06;
-			
+			rotMat.multiplyVector3(tVector);
+			tVector.multiplyScalar(speedMultiply);
+			target.position.addSelf( tVector )
+			speedMultiply += (1 - speedMultiply)*0.06;			
 			
 			//camera
 			var cvec = target.position.clone();
 			cvec.setLength(target.position.length()-800);
 			camera.position = cvec;
 			
-			// var cmtx1 = new THREE.Matrix4();
-			// cmtx1.setTranslation(0,0,200);
-			// var cmtrx = new THREE.Matrix4();
-			// cmtrx.setRotationX( Math.cos(cnt*pi/180) );
-			// var cmtry = new THREE.Matrix4();
-			// cmtry.setRotationY( Math.sin(cnt*pi/180) );
-			// var cmtx2 = new THREE.Matrix4();
-			// cmtx2.setPosition( target.position );
-			// var mm = cmtrx.multiplySelf(cmtx1);
-			// mm = cmtry.multiplySelf(cmtrx);
-			// mm = cmtx2.multiplySelf(cmtry);
-			// cTarget.position = mm.getPosition();
-
 			camera.lookAt(target.position);
 			
 			//particles
@@ -276,6 +261,8 @@
 			var speed = 1.0;
 			var perlin = new ImprovedNoise();
 			var ptcl, ps, p, v, rp, rv;
+
+			particles.geometry.verticesNeedUpdate = true;
 
 			for(var i=0; i<particleNum; i++){
 				
@@ -326,16 +313,18 @@
 				mtx.setPosition( ps2 );
 				//rotation
 				var mtr = new THREE.Matrix4();
-				mtr.setRotationX( p.x );
+				mtr.rotateX( p.x );
 				var mtrr = new THREE.Matrix4();
-				mtrr.setRotationY( p.y );
+				mtrr.rotateY( p.y );
 				
 				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
 
 				ps.getPositionFromMatrix(m);
 				ps.addSelf( target.position );
 				//set particle position
-				ptcl.position = pPos[i];
+				// ptcl.position = pPos[i];
+				particleGeometry.vertices[i] = pPos[i];
+				// ptcl.set(0,0,0)
 
 				//set line postition
 				if(refreshLine){
@@ -343,8 +332,8 @@
 					oPos[i].pop();
 
 					for( var j=0; j<strokeNum-1; j++){
-						vertices.push( new THREE.Vertex( oPos[i][j] ) );
-						vertices.push( new THREE.Vertex( oPos[i][j+1] ) );
+						vertices.push( oPos[i][j] );
+						vertices.push( oPos[i][j+1] );
 					}
 				}				
 			}
