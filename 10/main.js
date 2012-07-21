@@ -43,7 +43,7 @@ function init() {
 
 	//scene
 	scene = new THREE.Scene();
-	// scene.fog = new THREE.Fog(0xffffff, 1, 9000);
+	scene.fog = new THREE.Fog(0xffffff, 1, 9000);
 	scene.matrixAutoUpdate = false;
 
 	//camera
@@ -83,10 +83,6 @@ function init() {
 			color: colorTables[Math.floor(Math.random() * colorTables.length)],
 			shading: THREE.FlatShading
 		});
-		var geomRotMat = new THREE.Matrix4();
-		geomRotMat.rotateX( pi/2 );
-		geometry.applyMatrix(geomRotMat)
-
 		var mesh = new THREE.Mesh(geometry, material);
 		//mesh.matrixAutoUpdate = false;
 		mesh.position = pPos[i][0];
@@ -98,42 +94,33 @@ function init() {
 
 
 		//branch
+		if (Math.random() < 0.5) {
 
 			var branchNum = Math.floor(Math.random() * 10);
 			var previous = pPos[i][0];
 			var prevMesh = particles[i][0];
 			var lineGeom = new THREE.Geometry();
 			var vertices = new Array();
-			vertices.push(new THREE.Vector3(0, 0, 0));
-
-			var rndVec = new THREE.Vector3( Math.random()*2-1, 1, 0 ).normalize();
+			vertices.push(new THREE.Vertex(new THREE.Vector3(0, 0, 0)));
 
 			for (var j = 0; j < branchNum; j++) {
 
-				var bvec = new THREE.Vector3(300,0,0);
-				var translateMtx = new THREE.Matrix4();
-				if(j>0) translateMtx.translate(previous);
-
-				var rotationMtx = new THREE.Matrix4();
-				// var rndVec = new THREE.Vector3( Math.random()*2-1, Math.random()*2-1, Math.random()*2-1).normalize();
-				rotationMtx.rotateByAxis(rndVec, 15  * pi / 180);
-
-				var resultMtx = new THREE.Matrix4();
-				resultMtx.multiply(rotationMtx, translateMtx);
-
-				resultMtx.multiplyVector3(bvec);
+				var bvec = new THREE.Vector3(0, 0, -1); //previous.clone();
+				bvec.normalize();
+				var mtx = new THREE.Matrix4();
+				mtx.setRotationAxis(new THREE.Vector3(Math.random(), Math.random(), Math.random()), 30 / (j + 1) * pi / 180);
+				mtx.multiplyVector3(bvec);
+				var mult = 300 * (j + 1) - 15 * j;
+				bvec.multiplySelf(new THREE.Vector3(mult, mult, mult));
 				pPos[i].push(bvec);
 				previous = bvec;
-				vertices.push(bvec);
+				vertices.push(new THREE.Vertex(bvec));
 
 				geometry = new THREE.CylinderGeometry(pr / (j + 2) / 2, pr / (j + 2) / 2, 0, 16);
 				material = new THREE.MeshBasicMaterial({
 					color: colorTables[Math.floor(Math.random() * colorTables.length)],
 					shading: THREE.FlatShading
 				});
-				var geomRotMat = new THREE.Matrix4();
-				geomRotMat.rotateX( pi/2 );
-				geometry.applyMatrix(geomRotMat)
 				mesh = new THREE.Mesh(geometry, material);
 				//mesh.matrixAutoUpdate = false;
 				mesh.position = bvec;
@@ -149,7 +136,7 @@ function init() {
 			var line = new THREE.Line(lineGeom, lineMat);
 			particles[i][0].add(line);
 
-		
+		}
 
 	}
 
@@ -266,7 +253,7 @@ function resize() {
 	var stageHeight = window.innerHeight;
 	camera.aspect = stageWidth / stageHeight;
 	renderer.setSize(stageWidth, stageHeight)
-	camera.updateProjectionMatrix();
+	// camera.updateProjectionMatrix();
 }
 
 function mouseMove(ev) {
@@ -285,13 +272,13 @@ function animate() {
 function render() {
 	renderer.clear();
 
-	// scene.overrideMaterial = null;
-	// renderer.render(scene, camera, rtTextureColor, true);
-	// scene.overrideMaterial = materialDepth;
-	// renderer.render(scene, camera, rtTextureDepth, true);
-	// composerScene.render();
+	scene.overrideMaterial = null;
+	renderer.render(scene, camera, rtTextureColor, true);
+	scene.overrideMaterial = materialDepth;
+	renderer.render(scene, camera, rtTextureDepth, true);
+	composerScene.render();
 
-	renderer.render( scene, camera );
+	//renderer.render( scene, camera );
 
 }
 
@@ -457,9 +444,8 @@ function update() {
 		ps.y = sphereR * Math.sin(p.y) * Math.sin(p.x);
 		ps.z = sphereR * Math.cos(p.y);
 
-		// mesh.position = ps;
+		mesh.position = ps;
 		mesh.lookAt(group.position);
-		// mesh.rotation.setX(pi/2)
 
 		//for branch
 		subL = pPos[i].length;

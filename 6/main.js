@@ -96,7 +96,7 @@
 				group.add(mesh);
 				
 				//meshes
-				meshGeom.vertices.push(pPos[i]);
+				meshGeom.vertices.push(new THREE.Vertex(pPos[i]));
 
 			}
 			
@@ -292,7 +292,7 @@
 				ps.y = sphereR*Math.sin(p1.y)*Math.sin(p1.x);
 				ps.z = sphereR*Math.cos(p1.y);
 				
-				meshGeom.vertices.push(ps);
+				meshGeom.vertices.push(new THREE.Vertex(ps));
 				
 			}
 			
