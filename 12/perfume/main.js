@@ -18,11 +18,7 @@ var	metaballController = {
 		isolation: 250,
 		resolution: 32,
 		subtract: 30,
-		strength: 1//2.05
-		// isolation: 80,
-		// resolution: 28,
-		// subtract: 30,
-		// strength: 1//2.05
+		strength: 1
 	}
 
 
@@ -91,7 +87,7 @@ $(function() {
 	//spotLight.castShadow = true;
 	scene.add(spotLight);
 
-	var ambient = new THREE.AmbientLight(0x999999);
+	var ambient = new THREE.AmbientLight(0x333333);
 	scene.add(ambient);
 
 	sublight = new THREE.DirectionalLight(0xffffff, 0.5);
