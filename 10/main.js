@@ -31,6 +31,7 @@ var composerScene;
 var rtTextureDepth, rtTextureColor, shaderBokeh, effectBokeh;
 var pScene, pCamera, pMaterialBokeh, materialDepth;
 
+var delta = 0.01;
 
 function init() {
 
@@ -43,7 +44,7 @@ function init() {
 
 	//scene
 	scene = new THREE.Scene();
-	// scene.fog = new THREE.Fog(0xffffff, 1, 9000);
+	// scene.fog = new THREE.Fog(0xffffff, 0, 9000);
 	scene.matrixAutoUpdate = false;
 
 	//camera
@@ -169,65 +170,15 @@ function init() {
 	renderer = new THREE.WebGLRenderer();
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.setClearColorHex(0xffffff);
-	renderer.clearAlpha = 1;
+	// renderer.clearAlpha = 1;
 	renderer.autoClear = false;
-	renderer.sortObjects = true;
+	// renderer.sortObjects = true;
+	renderer.gammaInput = true;
+	renderer.gammaOutput = true;
+	
 	container.appendChild(renderer.domElement);
 
-	//Postprocessing
-	pScene = new THREE.Scene();
-	pCamera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -10000, 10000);
-	pCamera.position.z = 100;
-	pScene.add(pCamera);
-
-	//bokeh
-	materialDepth = new THREE.MeshDepthMaterial()
-	var pars = {
-		minFilter: THREE.LinearFilter,
-		magFilter: THREE.LinearFilter,
-		format: THREE.RGBFormat
-	};
-	rtTextureColor = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars, true);
-	rtTextureDepth = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars, true);
-	shaderBokeh = THREE.ShaderExtras["bokeh"];
-	effectBokeh = new THREE.ShaderPass(shaderBokeh);
-	effectBokeh.uniforms["tColor"].texture = rtTextureColor;
-	effectBokeh.uniforms["tDepth"].texture = rtTextureDepth;
-	effectBokeh.uniforms["focus"].value = 0.90;
-	effectBokeh.uniforms["aperture"].value = 0.05;
-	effectBokeh.uniforms["maxblur"].value = 1;
-	effectBokeh.uniforms["aspect"].value = window.innerWidth / window.innerHeight;
-	pMaterialBokeh = new THREE.ShaderMaterial({
-		uniforms: effectBokeh.uniforms,
-		vertexShader: shaderBokeh.vertexShader,
-		fragmentShader: shaderBokeh.fragmentShader
-	});
-
-	quad = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh);
-	quad.position.z = -500;
-	pScene.add(quad);
-
-	//vignette
-	var shaderVignette = THREE.ShaderExtras["vignette"];
-	var effectVignette = new THREE.ShaderPass(shaderVignette);
-	effectVignette.uniforms["offset"].value = 0.3;
-	effectVignette.uniforms["darkness"].value = 2.5;
-	effectVignette.renderToScreen = true;
-
-	//render pass			
-	var renderModel = new THREE.RenderPass(pScene, pCamera);
-	var renderTargetParameter = {
-		minFilter: THREE.LinearFilter,
-		magFilter: THREE.LinearFilter,
-		format: THREE.RGBFormat,
-		stencilBuffer: true,
-		depthBuffer: true
-	};
-	var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
-
-	composerScene = new THREE.EffectComposer(renderer, renderTarget);
-	composerScene.addPass(renderModel);
-	composerScene.addPass(effectVignette);
+	initPostProcessing();
 
 
 	//debug
@@ -261,6 +212,76 @@ function init() {
 
 }
 
+function initPostProcessing(){
+
+	//Postprocessing
+	pScene = new THREE.Scene();
+	pCamera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -10000, 10000);
+	pCamera.position.z = 100;
+	pScene.add(pCamera);
+
+	//bokeh
+	// materialDepth = new THREE.MeshDepthMaterial()
+
+	// var pars = {
+	// 	minFilter: THREE.LinearFilter,
+	// 	magFilter: THREE.LinearFilter,
+	// 	format: THREE.RGBFormat
+	// };
+	// rtTextureDepth = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+	// rtTextureColor = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+	// shaderBokeh = THREE.ShaderExtras["bokeh"];
+	// effectBokeh = new THREE.ShaderPass(shaderBokeh);
+	// effectBokeh.uniforms["tColor"].texture = rtTextureColor;
+	// effectBokeh.uniforms["tDepth"].texture = rtTextureDepth;
+	// effectBokeh.uniforms["focus"].value = 0.90;
+	// effectBokeh.uniforms["aperture"].value = 0.05;
+	// effectBokeh.uniforms["maxblur"].value = 1;
+	// effectBokeh.uniforms["aspect"].value = window.innerWidth / window.innerHeight;
+	// pMaterialBokeh = new THREE.ShaderMaterial( {
+	// 	uniforms: effectBokeh.uniforms,
+	// 	vertexShader: shaderBokeh.vertexShader,
+	// 	fragmentShader: shaderBokeh.fragmentShader
+	// });
+
+	// quad = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh);
+	// quad.position.z = -500;
+	// quad.rotation.x = Math.PI/2;
+	// pScene.add(quad);
+
+	//vignette
+	var shaderVignette = THREE.ShaderExtras["vignette"];
+	var effectVignette = new THREE.ShaderPass(shaderVignette);
+	effectVignette.uniforms["offset"].value = 0.3;
+	effectVignette.uniforms["darkness"].value = 2.5;
+	effectVignette.renderToScreen = true;
+
+	//render pass			
+	var renderModel = new THREE.RenderPass( scene, camera );
+	renderModel.clear = false;
+
+	var clearMask = new THREE.ClearMaskPass();
+	var renderMask = new THREE.MaskPass( scene, camera );
+	var renderMaskInverse = new THREE.MaskPass( scene, camera );
+	renderMaskInverse.inverse = true;
+
+	var renderTargetParameter = {
+		minFilter: THREE.LinearFilter, 
+		magFilter: THREE.LinearFilter, 
+		format: THREE.RGBFormat, 
+		stencilBuffer: true
+	};
+	var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
+
+	composerScene = new THREE.EffectComposer(renderer, renderTarget);
+	composerScene.addPass(renderModel);
+	// composerScene.addPass(renderMaskInverse);
+	// composerScene.addPass(clearMask);
+	// composerScene.addPass(effectVignette);
+
+}
+
+
 function resize() {
 	var stageWidth = window.innerWidth;
 	var stageHeight = window.innerHeight;
@@ -283,7 +304,10 @@ function animate() {
 }
 
 function render() {
+
 	renderer.clear();
+	renderer.setViewPort(0,0,window.innerWidth, window.innerHeight)
+	composerScene.render( delta );
 
 	// scene.overrideMaterial = null;
 	// renderer.render(scene, camera, rtTextureColor, true);
@@ -291,7 +315,7 @@ function render() {
 	// renderer.render(scene, camera, rtTextureDepth, true);
 	// composerScene.render();
 
-	renderer.render( scene, camera );
+	// renderer.render( scene, camera );
 
 }
 

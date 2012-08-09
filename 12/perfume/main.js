@@ -212,11 +212,11 @@ function audioAvailable(event) {
 		}
 		if(i<bufferSize/32) mult += magnitude;
 	}
-	if (mult>2) {
+	if (mult>1) {
 		var col = spotLightColors[ Math.floor(Math.random()*spotLightColors.length-1)];
 		spotLight.color = sublight.color = new THREE.Color(col);
-		spotLight.intensity = mult*16;
-		
+		spotLight.intensity = mult*24;
+
 	}else{
 		spotLight.intensity *= 0.4;
 	}
@@ -333,9 +333,9 @@ function createScene() {
 	refractionCube.format = THREE.RGBFormat;
 
 	material = new THREE.MeshPhongMaterial({
-		color: 0xdd0000,
-		specular: 0xdddddd,
-		ambient: 0x222222,
+		color: 0xffffff,
+		specular: 0xffffff,
+		ambient: 0x000000,
 		shininess: 8,
 		perPixel: true,
 		metal:true
@@ -356,11 +356,11 @@ function createScene() {
 	//Marching Cubes
 
 	//gui
-	gui = new DAT.GUI();
-	gui.add(metaballController, "isolation", 0, 2400, 1);
-	gui.add(metaballController, "resolution", 8, 128, 1);
-	gui.add(metaballController, "subtract", 1, 30, 1);
-	gui.add(metaballController, "strength", 1, 5, 0.01);
+	// gui = new DAT.GUI();
+	// gui.add(metaballController, "isolation", 0, 2400, 1);
+	// gui.add(metaballController, "resolution", 8, 128, 1);
+	// gui.add(metaballController, "subtract", 1, 30, 1);
+	// gui.add(metaballController, "strength", 1, 5, 0.01);
 
 	//mute
 	$("#mute").click(mute);
