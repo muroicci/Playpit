@@ -105,7 +105,7 @@ function createScene(){
 	var ground = new THREE.Mesh( geometry, planeMaterial );
 	ground.castShadow = true;
 	ground.receiveShadow = true;
-	// ground.rotation.x = -Math.PI/2;
+	ground.rotation.x = -Math.PI/2;
 	group.add( ground );
 
 	var groundShape = new CANNON.Plane( new CANNON.Vec3(0,1,0));

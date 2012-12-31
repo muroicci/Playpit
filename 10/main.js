@@ -306,8 +306,8 @@ function animate() {
 function render() {
 
 	renderer.clear();
-	renderer.setViewPort(0,0,window.innerWidth, window.innerHeight)
-	composerScene.render( delta );
+	renderer.setViewport(0,0,window.innerWidth, window.innerHeight)
+	//composerScene.render( delta );
 
 	// scene.overrideMaterial = null;
 	// renderer.render(scene, camera, rtTextureColor, true);
@@ -315,7 +315,7 @@ function render() {
 	// renderer.render(scene, camera, rtTextureDepth, true);
 	// composerScene.render();
 
-	// renderer.render( scene, camera );
+	renderer.render( scene, camera );
 
 }
 

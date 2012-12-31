@@ -15,7 +15,7 @@ var metaballs = [];
 var metaballFieldSize = 100;
 
 var	metaballController = {
-		isolation: 250,
+		isolation: 215,
 		resolution: 32,
 		subtract: 30,
 		strength: 1
@@ -63,14 +63,14 @@ $(function() {
 
 	//scene
 	scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0x000000, 500, 1000);
+	scene.fog = new THREE.Fog(0x000000, 600, 1000);
 	//group
 	group = new THREE.Object3D();
 	scene.add(group);
 
 	//camera
 	camera = new THREE.PerspectiveCamera(40, width / height, 1, 1000);
-	camera.position.set(0, 100, -400)
+	camera.position.set(0, 100, -600)
 	scene.add(camera);
 
 	cameraTarget = new THREE.Object3D();
@@ -78,20 +78,22 @@ $(function() {
 
 
 	//light
-	mainLight = new THREE.DirectionalLight(0xffffff, 0.2);
+	mainLight = new THREE.DirectionalLight(0xffffff, 0.3);
 	mainLight.castShadow = true;
-	mainLight.position.set(0, 600, 0);
+	mainLight.position.set(0, 800, 0);
 	scene.add(mainLight);
 
 	spotLight = new THREE.SpotLight(0x00fffff, 10, 400);
-	//spotLight.castShadow = true;
+	spotLight.castShadow = true;
 	scene.add(spotLight);
 
-	var ambient = new THREE.AmbientLight(0x333333);
+	var ambient = new THREE.AmbientLight(0x111111);
 	scene.add(ambient);
 
-	sublight = new THREE.DirectionalLight(0xffffff, 0.5);
-	sublight.position.set(0, -10, 0)
+	sublight = new THREE.DirectionalLight(0xffffff, 0.75);
+	sublight.position.set(0, -100, 0);
+	sublight.rotation.x = -Math.PI;
+
 	scene.add(sublight);
 
 	//renderer
@@ -164,7 +166,7 @@ function loadAudio() {
 		source.buffer = context.createBuffer(request.response, false);
 		source.noteOn(0);
 		startTimes[0] = Date.now();
-		console.log('play')
+		//console.log('play')
 
 		if(!isMute){
 			source.gain.value = 1;
@@ -214,11 +216,19 @@ function audioAvailable(event) {
 	}
 	if (mult>1) {
 		var col = spotLightColors[ Math.floor(Math.random()*spotLightColors.length-1)];
-		spotLight.color = sublight.color = new THREE.Color(col);
+		mainLight.color = spotLight.color = sublight.color = new THREE.Color(col);
 		spotLight.intensity = mult*24;
+		sublight.intensity = mult*10;
 
 	}else{
-		spotLight.intensity *= 0.4;
+		if(!isMute){
+			spotLight.intensity *= 0.4;
+			sublight.intensity *= 0.4;
+		}else{
+			spotLight.intensity = 0;
+			sublight.intensity = 0.75;
+			mainLight.color = sublight.color = new THREE.Color(0xffffff);
+		}
 	}
 
 }
@@ -333,17 +343,18 @@ function createScene() {
 	refractionCube.format = THREE.RGBFormat;
 
 	material = new THREE.MeshPhongMaterial({
-		color: 0xffffff,
+		color: 0xcccccc,
 		specular: 0xffffff,
-		ambient: 0x000000,
+		ambient: 0x111111,
 		shininess: 8,
 		perPixel: true,
 		metal:true
 	});
 
 	//ground
-	var geometry = new THREE.PlaneGeometry(10000, 10000);
-	var ground = new THREE.Mesh(geometry, material);
+	var floorGeometry = new THREE.PlaneGeometry(10000, 10000,1,1);
+	var ground = new THREE.Mesh(floorGeometry, material);
+	ground.rotation.x = -Math.PI/2
 	ground.castShadow = true;
 	ground.receiveShadow = true;
 	// ground.position.y = -metaballFieldSize/2;
