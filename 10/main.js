@@ -28,8 +28,8 @@ var particleNum = 150;
 var colorTables = [0x0d3033, 0x317466, 0xb9d49e, 0xe8f196, 0xc7e947];
 
 var composerScene;
-var rtTextureDepth, rtTextureColor, shaderBokeh, effectBokeh;
-var pScene, pCamera, pMaterialBokeh, materialDepth;
+var rtTextureDepth, rtTextureColor, shaderBokeh, bokehUniforms;
+var pScene, pCamera, pMaterialBokeh, pQuad, materialDepth;
 
 var delta = 0.01;
 
@@ -44,12 +44,12 @@ function init() {
 
 	//scene
 	scene = new THREE.Scene();
-	// scene.fog = new THREE.Fog(0xffffff, 0, 9000);
+	//scene.fog = new THREE.Fog(0xffffff, 0, 9000);
 	scene.matrixAutoUpdate = false;
 
 	//camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-	camera.position.z = 3500;
+	camera.position.z = 4500;
 	scene.add(camera);
 
 	group = new THREE.Object3D();
@@ -181,23 +181,6 @@ function init() {
 	initPostProcessing();
 
 
-	//debug
-	// var effectController = {
-	// 	focus: 1.0,
-	// 	aperture: 0.025,
-	// 	maxblur: 1.0
-	// };
-	// 
-	// var matChanger = function(){
-	// 	effectBokeh.uniforms["focus"].value = effectController.focus;
-	// 	effectBokeh.uniforms["aperture"].value = effectController.aperture;
-	// 	effectBokeh.uniforms["maxblur"].value = effectController.maxblur;
-	// }
-	// var gui = new GUI();
-	// gui.add( effectController, "focus", 0.0, 3.0, 0.025).onChange(matChanger);
-	// gui.add( effectController, "aperture", 0.001, 0.2, 0.001).onChange(matChanger);
-	// gui.add( effectController, "maxblur", 0.0, 20.0, 0.025).onChange(matChanger);
-
 	//event
 	document.addEventListener('mousemove', mouseMove);
 	window.addEventListener('resize', resize, false);
@@ -215,69 +198,77 @@ function init() {
 function initPostProcessing(){
 
 	//Postprocessing
+
+	var effectController = {
+		focus: 0.9,
+		aperture: 0.03,
+		maxblur: 1
+	};
+
+	materialDepth = new THREE.MeshDepthMaterial();
 	pScene = new THREE.Scene();
 	pCamera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -10000, 10000);
 	pCamera.position.z = 100;
 	pScene.add(pCamera);
 
-	//bokeh
-	// materialDepth = new THREE.MeshDepthMaterial()
+	//Bokeh
+	var pars = {
+		minFilter: THREE.LinearFilter,
+		magFilter: THREE.LinearFilter,
+		format: THREE.RGBFormat
+	}
+	rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+	rtTextureColor = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+	var shaderBokeh = THREE.BokehShader;
+	bokehUniforms = THREE.UniformsUtils.clone( shaderBokeh.uniforms );
+	bokehUniforms["tColor"].value = rtTextureColor;
+	bokehUniforms["tDepth"].value = rtTextureDepth;
+	bokehUniforms["focus"].value = effectController.focus;
+	bokehUniforms["aperture"].value = effectController.aperture;
+	bokehUniforms["maxblur"].value = effectController.maxblur;
+	bokehUniforms["aspect"].value = window.innerWidth/window.innerHeight;
+	pMaterialBokeh = new THREE.ShaderMaterial({
+		uniforms:bokehUniforms,
+		vertexShader: shaderBokeh.vertexShader,
+		fragmentShader: shaderBokeh.fragmentShader
+	})
+	pQuad = new THREE.Mesh( new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh);
+	pQuad.position.z = -500;
+	pScene.add(pQuad);
 
-	// var pars = {
-	// 	minFilter: THREE.LinearFilter,
-	// 	magFilter: THREE.LinearFilter,
-	// 	format: THREE.RGBFormat
-	// };
-	// rtTextureDepth = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
-	// rtTextureColor = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
-	// shaderBokeh = THREE.ShaderExtras["bokeh"];
-	// effectBokeh = new THREE.ShaderPass(shaderBokeh);
-	// effectBokeh.uniforms["tColor"].texture = rtTextureColor;
-	// effectBokeh.uniforms["tDepth"].texture = rtTextureDepth;
-	// effectBokeh.uniforms["focus"].value = 0.90;
-	// effectBokeh.uniforms["aperture"].value = 0.05;
-	// effectBokeh.uniforms["maxblur"].value = 1;
-	// effectBokeh.uniforms["aspect"].value = window.innerWidth / window.innerHeight;
-	// pMaterialBokeh = new THREE.ShaderMaterial( {
-	// 	uniforms: effectBokeh.uniforms,
-	// 	vertexShader: shaderBokeh.vertexShader,
-	// 	fragmentShader: shaderBokeh.fragmentShader
-	// });
 
-	// quad = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), pMaterialBokeh);
-	// quad.position.z = -500;
-	// quad.rotation.x = Math.PI/2;
-	// pScene.add(quad);
-
-	//vignette
-	var shaderVignette = THREE.ShaderExtras["vignette"];
-	var effectVignette = new THREE.ShaderPass(shaderVignette);
-	effectVignette.uniforms["offset"].value = 0.3;
-	effectVignette.uniforms["darkness"].value = 2.5;
+	//Vignette
+	var effectVignette = new THREE.ShaderPass( THREE.VignetteShader );
+	effectVignette.uniforms['offset'].value = 1.05;
+	effectVignette.uniforms['darkness'].value=0.25;
 	effectVignette.renderToScreen = true;
-
-	//render pass			
-	var renderModel = new THREE.RenderPass( scene, camera );
-	renderModel.clear = false;
-
-	var clearMask = new THREE.ClearMaskPass();
-	var renderMask = new THREE.MaskPass( scene, camera );
-	var renderMaskInverse = new THREE.MaskPass( scene, camera );
-	renderMaskInverse.inverse = true;
 
 	var renderTargetParameter = {
 		minFilter: THREE.LinearFilter, 
 		magFilter: THREE.LinearFilter, 
 		format: THREE.RGBFormat, 
-		stencilBuffer: true
+		stencilBuffer: false
 	};
 	var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
 
-	composerScene = new THREE.EffectComposer(renderer, renderTarget);
-	composerScene.addPass(renderModel);
-	// composerScene.addPass(renderMaskInverse);
-	// composerScene.addPass(clearMask);
-	// composerScene.addPass(effectVignette);
+	var renderModel = new THREE.RenderPass( pScene, pCamera );	
+	composerScene = new THREE.EffectComposer( renderer, renderTarget );
+	composerScene.addPass( renderModel );
+	composerScene.addPass( effectVignette );
+
+
+	//debug
+	
+	// var matChanger = function(){
+	// 	bokehUniforms["focus"].value = effectController.focus;
+	// 	bokehUniforms["aperture"].value = effectController.aperture;
+	// 	bokehUniforms["maxblur"].value = effectController.maxblur;
+	// }
+	// var gui = new GUI();
+	// gui.add( effectController, "focus", 0.0, 2.0, 0.025).onChange(matChanger);
+	// gui.add( effectController, "aperture", 0.001, 0.2, 0.001).onChange(matChanger);
+	// gui.add( effectController, "maxblur", 0.0, 20.0, 0.025).onChange(matChanger);
+
 
 }
 
@@ -306,16 +297,15 @@ function animate() {
 function render() {
 
 	renderer.clear();
-	renderer.setViewport(0,0,window.innerWidth, window.innerHeight)
-	//composerScene.render( delta );
 
-	// scene.overrideMaterial = null;
-	// renderer.render(scene, camera, rtTextureColor, true);
-	// scene.overrideMaterial = materialDepth;
-	// renderer.render(scene, camera, rtTextureDepth, true);
-	// composerScene.render();
+	scene.overrideMaterial = null;
+	renderer.render( scene, camera, rtTextureColor, true );
 
-	renderer.render( scene, camera );
+	scene.overrideMaterial = materialDepth;
+	renderer.render( scene, camera, rtTextureDepth, true );
+	
+	composerScene.render( 0.1 );
+
 
 }
 
@@ -503,8 +493,8 @@ function update() {
 	//camera movement
 	group.rotation.x += -my * 0.00005;
 	group.rotation.y += -mx * 0.00005;
-	camera.position.x += (-mx * 5 - camera.position.x) * 0.05;
-	camera.position.y += (my * 5 - camera.position.y) * 0.05;
+	// camera.position.x += (-mx * 5 - camera.position.x) * 0.05;
+	// camera.position.y += (my * 5 - camera.position.y) * 0.05;
 	camera.lookAt(target.position);
 
 

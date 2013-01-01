@@ -81,8 +81,7 @@
 
 			
 			//for postprocessing
-			var shaderVignette = THREE.ShaderExtras[ "vignette" ];
-			var effectVignette = new THREE.ShaderPass( shaderVignette );
+			var effectVignette = new THREE.ShaderPass( THREE.VignetteShader );
 			effectVignette.uniforms["offset"].value = 0.95;
 			effectVignette.uniforms["darkness"].value = 1.6;
 			effectVignette.renderToScreen = true;
@@ -213,8 +212,8 @@
 			update();
 			
 			renderer.clear();
-			// composerScene.render(0.1);
-			renderer.render(scene, camera)
+			 composerScene.render(0.1);
+			//renderer.render(scene, camera)
 			
 			//stats.update();
 			

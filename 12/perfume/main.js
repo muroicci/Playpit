@@ -63,14 +63,14 @@ $(function() {
 
 	//scene
 	scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0x000000, 600, 1000);
+	scene.fog = new THREE.Fog(0x000000, 400, 1000);
 	//group
 	group = new THREE.Object3D();
 	scene.add(group);
 
 	//camera
 	camera = new THREE.PerspectiveCamera(40, width / height, 1, 1000);
-	camera.position.set(0, 100, -600)
+	camera.position.set(0, 100, -500)
 	scene.add(camera);
 
 	cameraTarget = new THREE.Object3D();
@@ -115,7 +115,9 @@ $(function() {
 
 	//trackball
 	trackball = new THREE.TrackballControls(camera, renderer.domElement);
-	//trackball = new THREE.RollControls(camera, renderer.domElement);
+	trackball.zoomSpeed = 0.5;
+	trackball.minDistance = 200;
+	trackball.maxDistance = 600;
 
 	//audio
 	// audio = new Audio();

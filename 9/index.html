@@ -13,15 +13,13 @@
 	<script src="/common/js/gui/gui.full.js" type="text/javascript" charset="utf-8"></script>
 	
 	
-	<script src="/common/js/ShaderExtras.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/VignetteShader.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/CopyShader.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/VerticalTiltShiftShader.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/common/js/postprocessing/RenderPass.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/common/js/postprocessing/ShaderPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/TexturePass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/common/js/postprocessing/MaskPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/BloomPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/DotScreenPass.js" type="text/javascript" charset="utf-8"></script>
-	<script src="/common/js/postprocessing/FilmPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
 	
 	
 	<style>
@@ -71,8 +69,10 @@
 
 				var areaLength = 1200;
 				var particleR = 15;
-				var particleNum = 1000;
-				var strokeNum = 30;
+				var particleNum = 1500;
+				var strokeNum = 25;
+
+				var hBlur, vBlur;
 				
 				//for depth of field
 				var rtTextureDepth, rtTextureColor, materialDepth
@@ -114,22 +114,33 @@
 
 
 					//for postprocessing
-					//vignette
-					var shaderVignette = THREE.ShaderExtras[ "vignette" ];
-					var effectVignette = new THREE.ShaderPass( shaderVignette );
-					effectVignette.uniforms["offset"].value = 0.50;
-					effectVignette.uniforms["darkness"].value = 1.5;
+					//Vignette
+					var effectVignette = new THREE.ShaderPass( THREE.VignetteShader );
+					effectVignette.uniforms['offset'].value = 1.05;
+					effectVignette.uniforms['darkness'].value=0.25;
 					effectVignette.renderToScreen = true;
-					
 
-					var renderModel = new THREE.RenderPass( scene, camera );
-					var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
-					var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
+					//tiltshift blur
+					vBlur = new THREE.ShaderPass( THREE.VerticalTiltShiftShader);
+					vBlur.uniforms['v'].value = 4/stageHeight;
+					vBlur.uniforms['r'].value = 0.15; //0.35 default
 
-					composerScene = new THREE.EffectComposer( renderer,  renderTarget);
+					//debug
+
+
+					var renderTargetParameter = {
+						minFilter: THREE.LinearFilter, 
+						magFilter: THREE.LinearFilter, 
+						format: THREE.RGBFormat, 
+						stencilBuffer: false
+					};
+					var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
+
+					var renderModel = new THREE.RenderPass( scene, camera );	
+					composerScene = new THREE.EffectComposer( renderer, renderTarget );
 					composerScene.addPass( renderModel );
+					composerScene.addPass( vBlur );
 					composerScene.addPass( effectVignette );
-
 
 					//Material
 					var texture = THREE.ImageUtils.loadTexture( "/9/textures/100px_circle.png");
@@ -232,7 +243,8 @@
 					// renderer.render( scene, camera, rtTextureDepth, true);
 					// renderer.render( scene, camera);
 					// composerScene.render();
-					renderer.render(scene, camera)
+//					renderer.render(scene, camera)
+					composerScene.render(0.1);
 
 
 				}
