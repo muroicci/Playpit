@@ -60,7 +60,7 @@ div#content_info{
 	top:0px;
 	left:195px;
 /*	border-left: 1px solid rgba(255,255,255,0.2);*/
-	width:180px;
+	width:300px;
 	height:128px;
 	overflow: visible;
 	z-index:1;
@@ -125,7 +125,7 @@ section>p{
 	float:left;
 	font: 12px/15px "MisoRegular", Verdana, sans-serif;
 	text-transform: uppercase;
-	width:115px;
+	width:200px;
 }
 
 #content{

@@ -18,7 +18,7 @@ var	metaballController = {
 		isolation: 215,
 		resolution: 32,
 		subtract: 30,
-		strength: 1
+		strength: 0.85
 	}
 
 
@@ -84,14 +84,17 @@ $(function() {
 	scene.add(mainLight);
 
 	spotLight = new THREE.SpotLight(0x00fffff, 10, 400);
-	spotLight.castShadow = true;
+	spotLight.castShadow = false;
+	spotLight.position.z = 20;
+	spotLight.lookAt(group)
 	scene.add(spotLight);
 
-	var ambient = new THREE.AmbientLight(0x111111);
+	var ambient = new THREE.AmbientLight(0x000000);
 	scene.add(ambient);
 
 	sublight = new THREE.DirectionalLight(0xffffff, 0.75);
 	sublight.position.set(0, -100, 0);
+	sublight.castShadow = false;
 	sublight.rotation.x = -Math.PI;
 
 	scene.add(sublight);
@@ -332,17 +335,6 @@ function resize() {
 function createScene() {
 
 	//material
-	// environment map
-	var path = "/common/images/textures/cube/Bridge2/";
-	var format = '.jpg';
-	var urls = [
-	path + 'posx' + format, path + 'negx' + format, path + 'posy' + format, path + 'negy' + format, path + 'posz' + format, path + 'negz' + format];
-
-	var reflectionCube = THREE.ImageUtils.loadTextureCube(urls);
-	reflectionCube.format = THREE.RGBFormat;
-
-	var refractionCube = new THREE.Texture(reflectionCube.image, new THREE.CubeRefractionMapping());
-	refractionCube.format = THREE.RGBFormat;
 
 	material = new THREE.MeshPhongMaterial({
 		color: 0xcccccc,
@@ -359,14 +351,33 @@ function createScene() {
 	ground.rotation.x = -Math.PI/2
 	ground.castShadow = true;
 	ground.receiveShadow = true;
-	// ground.position.y = -metaballFieldSize/2;
 	group.add(ground);
 
-	//test box
-	// box = new THREE.Mesh(new THREE.CubeGeometry(metaballFieldSize*2,metaballFieldSize*2, metaballFieldSize*2, 1,1))
-	// group.add(box)
+	//postprocessing
+	//Vignette
+	var effectVignette = new THREE.ShaderPass( THREE.VignetteShader );
+	effectVignette.uniforms['offset'].value = 1.05;
+	effectVignette.uniforms['darkness'].value=1.15;
+	effectVignette.renderToScreen = true;
 
-	//Marching Cubes
+	//bloom
+	var effectBloom = new THREE.BloomPass( 1.00 );
+
+
+	var renderTargetParameter = {
+		minFilter: THREE.LinearFilter, 
+		magFilter: THREE.LinearFilter, 
+		format: THREE.RGBFormat, 
+		stencilBuffer: false
+	};
+	var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
+
+	var renderModel = new THREE.RenderPass( scene, camera );	
+	composerScene = new THREE.EffectComposer( renderer, renderTarget );
+	composerScene.addPass( renderModel );
+	composerScene.addPass( effectBloom );
+	composerScene.addPass( effectVignette );
+
 
 	//gui
 	// gui = new DAT.GUI();
@@ -528,6 +539,7 @@ function updateBlobs(i) {
 
 
 function render() {
-	renderer.clear();
-	renderer.render(scene, camera);
+	// renderer.clear();
+	// renderer.render(scene, camera);
+	composerScene.render();
 }
