@@ -1,0 +1,382 @@
+
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>The Year of Snake | Playpit 13</title>
+	<script src="/common/js/Three.js" type="text/javascript" ></script>
+	
+	<script src="/common/js/Detector.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/controls/TrackballControls.js" type="text/javascript"></script>
+
+	<script src="/common/js/shaders/VignetteShader.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/CopyShader.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/ConvolutionShader.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/RenderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/ShaderPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/MaskPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/BloomPass.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/postprocessing/EffectComposer.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/common/js/shaders/BleachBypassShader.js"></script>
+	<script src="/common/js/shaders/FXAAShader.js"></script>
+
+	<script src="/common/js/shaders/UnpackDepthRGBAShader.js"></script>
+
+	
+	<style>
+	 body{
+		margin:0;
+		padding:0;
+		background-color:#706f6e;
+		overflow: hidden;	
+	}
+	</style>
+	<link rel="stylesheet" href="../common/js/gui/gui.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	
+</head>
+
+<body>
+	<script type="text/javascript">
+
+		var container;
+		var scene, camera, renderer;
+		var composerScene;
+
+		var snakes = [];
+		var splines = [];
+		var snakeNum = 4;
+		var snakeSegmentsH = 10;
+		var snakeSegmentsV = 80;
+		var snakeRadius = 4;
+
+		var floor;
+		var floorPos = -10;
+		
+		var counts = [0,0,0,0];
+		var speeds = [(Math.random()*2+2)/1000,(Math.random()*2+2)/1000,(Math.random()*2+2)/1000,(Math.random()*2+2)/1000 ];
+
+		var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
+		var sceneHUD, cameraOrtho, hudMaterial;
+		var SCREEN_WIDTH = window.innerWidth;
+		var SCREEN_HEIGHT = window.innerHeight;
+
+		var letters2013 = [
+			[[119.733,232.277,0], [115.861,231.839,0], [112.53,229.974,0], [109.781,226.858,0], [107.651,222.67,0], [106.181,217.584,0], [105.409,211.78,0], [105.375,205.433,0], [106.117,198.721,0], [107.675,191.82,0], [110.089,184.908,0], [113.398,178.162,0], [117.64,171.759,0], [122.855,165.875,0], [129.083,160.688,0], [136.363,156.374,0], [144.733,153.111,0], [153.604,150.858,0], [162.319,149.43,0], [170.818,148.787,0], [179.044,148.887,0], [186.935,149.69,0], [194.432,151.155,0], [201.475,153.242,0], [208.005,155.91,0], [213.962,159.118,0], [219.287,162.826,0], [223.919,166.993,0], [227.8,171.578,0], [230.869,176.541,0], [233.068,181.841,0], [234.336,187.437,0], [234.614,193.289,0], [232.123,208.343,0], [226.153,224.199,0], [217.222,240.627,0], [205.846,257.396,0], [192.542,274.277,0], [177.827,291.038,0], [162.217,307.449,0], [146.229,323.278,0], [130.381,338.296,0], [115.189,352.271,0], [101.17,364.975,0], [88.841,376.174,0], [78.718,385.64,0], [71.318,393.14,0], [67.159,398.445,0], [66.757,401.325,0], [70.394,403.321,0], [74.981,403.452,0], [80.408,401.973,0], [86.567,399.14,0], [93.346,395.207,0], [100.637,390.433,0], [108.328,385.07,0], [116.311,379.375,0], [124.474,373.604,0], [132.709,368.011,0], [140.906,362.853,0], [148.956,358.384,0], [156.746,354.86,0], [164.169,352.537,0], [171.114,351.671,0], [177.471,352.516,0], [183.096,354.939,0], [188.009,358.485,0], [192.35,362.923,0], [196.258,368.02,0], [199.874,373.546,0], [203.336,379.271,0], [206.784,384.962,0], [210.358,390.388,0], [214.197,395.319,0], [218.44,399.524,0], [223.228,402.772,0], [228.699,404.832,0], [234.993,405.472,0], [242.25,404.461,0], [250.608,401.568,0], [260.209,396.563,0]], 
+			[[359.637,152.833,0], [346.588,156.508,0], [334.719,165.036,0], [324.101,177.723,0], [314.803,193.875,0], [306.895,212.798,0], [300.447,233.799,0], [295.529,256.184,0], [292.211,279.26,0], [290.564,302.332,0], [290.656,324.708,0], [292.558,345.692,0], [296.339,364.593,0], [302.07,380.715,0], [309.821,393.366,0], [319.661,401.853,0], [331.661,405.479,0], [346.567,403.293,0], [359.376,394.98,0], [370.17,381.436,0], [379.036,363.557,0], [386.056,342.239,0], [391.314,318.382,0], [394.897,292.88,0], [396.887,266.631,0], [397.368,240.532,0], [396.426,215.479,0], [394.145,192.369,0], [390.607,172.099,0], [385.898,155.566,0], [380.104,143.667,0], [373.306,137.298,0], [365.59,137.357,0]],
+			[[458.514,164.852,0],[461.23,160.556,0],[465.517,155.545,0],[470.933,150.251,0],[477.04,145.104,0],[483.398,140.538,0],[489.568,136.982,0],[495.11,134.87,0],[499.585,134.63,0],[500.869,138.055,0],[501.036,146.964,0],[500.255,160.572,0],[498.692,178.097,0],[496.516,198.752,0],[493.894,221.755,0],[490.992,246.32,0],[487.979,271.663,0],[485.021,297,0],[482.287,321.547,0],[479.942,344.519,0],[478.156,365.132,0],[477.097,382.602,0],[476.93,396.143,0],[477.822,404.971,0],[479.942,408.304,0]],
+			[[616.095,200.188,0], [612.677,200.277,0], [610.133,198.554,0], [608.474,195.3,0], [607.711,190.795,0], [607.857,185.32,0], [608.925,179.156,0], [610.927,172.583,0], [613.873,165.88,0], [617.777,159.331,0], [622.651,153.213,0], [628.508,147.81,0], [635.356,143.399,0], [643.212,140.264,0], [652.086,138.683,0], [661.989,138.938,0], [672.936,141.31,0], [689.494,148.318,0], [700.88,157.215,0], [707.659,167.616,0], [710.396,179.138,0], [709.652,191.395,0], [705.995,204.005,0], [699.988,216.583,0], [692.195,228.747,0], [683.182,240.111,0], [673.511,250.292,0], [663.747,258.907,0], [654.456,265.57,0], [646.201,269.898,0], [639.548,271.509,0], [635.059,270.017,0], [633.3,265.038,0], [634.062,259.406,0], [636.581,256.11,0], [640.581,254.997,0], [645.789,255.917,0], [651.932,258.718,0], [658.734,263.25,0], [665.923,269.36,0], [673.226,276.898,0], [680.367,285.712,0], [687.074,295.652,0], [693.072,306.565,0], [698.088,318.302,0], [701.848,330.71,0], [704.078,343.638,0], [704.504,356.935,0], [702.854,370.45,0], [698.371,382.754,0], [690.828,392.616,0], [680.734,400.188,0], [668.602,405.614,0], [654.941,409.047,0], [640.264,410.635,0], [625.079,410.525,0], [609.9,408.869,0], [595.237,405.814,0], [581.603,401.509,0], [569.506,396.103,0], [559.458,389.744,0], [551.971,382.582,0], [547.556,374.767,0], [546.723,366.445,0], [549.983,357.767,0]]
+		]
+
+		var mousex=0, mousey=0;
+
+		window.addEventListener('load', function(){
+			init();
+			resize();
+			animate();
+		});
+
+
+		function init(){
+			container = document.createElement('div');
+			document.body.appendChild( container );
+			
+			scene = new THREE.Scene(); 
+			scene.fog = new THREE.Fog(0x706f6e, 50, 400);
+			camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight);
+			camera.position.set(0,0,100);
+
+			// createHUD();
+
+			renderer = new THREE.WebGLRenderer({
+				antialias:true
+			});
+			renderer.autoClear = false;
+			renderer.setClearColor( 0xcccccc, 1 );
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.shadowMapEnabled = true;
+			renderer.shadowMapType = THREE.PCFShadowMap;
+			container.appendChild( renderer.domElement );
+
+			//light
+			var ambientLight = new THREE.AmbientLight(0x4d4b4a);
+			scene.add(ambientLight);
+
+			var spotLight1 = new THREE.SpotLight( 0xffffff, 0.8, 10000, true );
+			spotLight1.color.setHSV( 0.05, 0.05, 1 );
+			spotLight1.position.set( -30, 30, 150 );
+			spotLight1.lookAt( scene.position );
+			spotLight1.castShadow = true;
+			spotLight1.shadowCameraNear = 10;
+			spotLight1.shadowCameraFar = camera.far;
+			spotLight1.shadowCameraFov = 50;
+			spotLight1.shadowBias = 0.0001;
+			spotLight1.shadowDarkness = 0.3;
+			spotLight1.shadowMapWidth = 2048;
+			spotLight1.shadowMapHeight = 2048;
+			// spotLight1.shadowCameraVisible = true;
+			scene.add( spotLight1 );
+
+			var pointLight2 = new THREE.PointLight( 0xffffff, 0.1, 10000 );
+			pointLight2.color.setHSV( 0.05, 0.05, 1 );
+			pointLight2.position.set( 600, -600, -600 );
+			scene.add( pointLight2 );
+
+			//floor
+			var floorGeom = new THREE.PlaneGeometry(100, 100);
+			var floorMat = new THREE.MeshPhongMaterial({
+				color: 0xcccccc,
+				ambient: 0xfafafa
+			});
+			floor = new THREE.Mesh(floorGeom, floorMat);
+			// floor.rotation.x = -Math.PI/2;
+			floor.position.y = floorPos;
+			floor.scale.set(100,100,100);
+			floor.castShadow = true;
+			floor.receiveShadow = true;
+			scene.add(floor);
+
+			//create tube
+
+			var bumpMap = THREE.ImageUtils.loadTexture("skin0_bump.jpg");
+			bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+			bumpMap.anisotropy = 64;
+			bumpMap.repeat.set( 1, 24 );
+
+			for (var i = 0; i < snakeNum; i++) {
+				
+				var tube = new THREE.CylinderGeometry(10, 10, 100, snakeSegmentsH, snakeSegmentsV, true);
+				tube.dynamic = true;
+
+				var imgMap = THREE.ImageUtils.loadTexture("skin"+i+".jpg");
+				imgMap.wrapS = imgMap.wrapT = THREE.RepeatWrapping;
+				imgMap.anisotropy = 64;
+				imgMap.repeat.set( 2, 24 );
+
+
+				var material = new THREE.MeshPhongMaterial({
+					specular: 0x777777, 
+					shininess: 40, 
+					map: imgMap,
+					bumpMap: bumpMap, 
+					bumpScale: 0.1,
+					wireframe: false,
+					shading: THREE.SmoothShading,
+					metal: false				
+				})
+
+				snakes[i] = new THREE.Mesh( tube, material );
+				snakes[i].receiveShadow = true;
+				snakes[i].castShadow = true;
+				scene.add(snakes[i]);
+
+				// Path
+				var points = [];
+				var arr = letters2013[i];
+				for(var j=0, ll=arr.length; j<ll; j++){
+					var pt = new THREE.Vector3(
+						arr[j][0]-400, 
+						-arr[j][1]+300, 
+						Math.sin(0.5*j/ll*Math.PI*2)*150
+						);
+					pt.multiplyScalar(0.18);
+					points.push(pt);
+				}
+				//interpolate spline for start/end points
+				points.unshift(points[0].clone());
+				points.push(points[points.length-1].clone());
+				points[0].z = floor.position.z - 1;
+				points[points.length-1].z = floor.position.z - 1;
+
+				splines[i] = new THREE.SplineCurve3( points );
+
+			};
+
+			//postprocessing
+			//Vignette
+			var effectVignette = new THREE.ShaderPass( THREE.VignetteShader );
+			effectVignette.uniforms['offset'].value = 1.0;
+			effectVignette.uniforms['darkness'].value=0.50;
+			effectVignette.renderToScreen = true;
+
+			//bloom
+			var effectBloom = new THREE.BloomPass( 0.4 );
+			var effectBleach = new THREE.ShaderPass( THREE.BleachBypassShader );
+			var effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+			effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			var renderTargetParameter = {
+				minFilter: THREE.LinearFilter, 
+				magFilter: THREE.LinearFilter, 
+				format: THREE.RGBFormat, 
+				stencilBuffer: false
+			};
+			var renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameter);
+
+			var renderModel = new THREE.RenderPass( scene, camera );	
+			composerScene = new THREE.EffectComposer( renderer, renderTarget );
+			composerScene.addPass( renderModel );
+			// composerScene.addPass( effectBloom );
+			composerScene.addPass( effectBleach );
+			composerScene.addPass( effectFXAA );
+			composerScene.addPass( effectVignette );
+
+
+			//event
+			document.addEventListener('mousemove', mouseMove);
+			window.addEventListener('resize', resize, false);
+
+		}
+
+
+/*
+		function createHUD() {
+
+				cameraOrtho = new THREE.OrthographicCamera( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2,  SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, -10, 1000 );
+				cameraOrtho.position.z = 10;
+
+				var shader = THREE.UnpackDepthRGBAShader;
+				var uniforms = new THREE.UniformsUtils.clone( shader.uniforms );
+
+				hudMaterial = new THREE.ShaderMaterial( { vertexShader: shader.vertexShader, fragmentShader: shader.fragmentShader, uniforms: uniforms } );
+
+				var hudGeo = new THREE.PlaneGeometry( SHADOW_MAP_WIDTH / 2, SHADOW_MAP_HEIGHT / 2 );
+				var hudMesh = new THREE.Mesh( hudGeo, hudMaterial );
+				hudMesh.position.x = ( SCREEN_WIDTH - SHADOW_MAP_WIDTH / 2 ) * -0.5;
+				hudMesh.position.y = ( SCREEN_HEIGHT - SHADOW_MAP_HEIGHT / 2 ) * -0.5;
+				hudMesh.rotation.x = Math.PI / 2;
+
+				sceneHUD = new THREE.Scene();
+				sceneHUD.add( hudMesh );
+
+				cameraOrtho.lookAt( sceneHUD.position );
+
+		}
+*/
+
+
+		function animate(){
+			requestAnimationFrame(animate);
+
+			var inc = 2*Math.PI/(snakeSegmentsH);
+
+			//snake movement
+			for (var i = 0; i < snakeNum; i++) {
+
+				//counter
+				var cnt = counts[i];
+
+				cnt += speeds[i];
+				if(cnt>2) {
+					cnt = 0; 
+					speeds[i]=(Math.random()*2+2)/1000;
+				}
+				counts[i] = cnt;
+
+				var snake = snakes[i];
+				var path = splines[i];
+				var pathLength = path.getLength();
+				var snakeLength = pathLength*0.8;
+				var lp = snakeLength/(snakeSegmentsV+1);
+				lp = lp/pathLength;
+
+				for (var j = 0, l= snake.geometry.vertices.length; j < l; j+=snakeSegmentsH+1) {
+					
+					var idx = j/(snakeSegmentsH+1);
+					var n = cnt - idx*lp;
+					if(n<0) { n = 0 }else if(n>1){ n = 1 };
+
+					//radius
+					var radius;
+					var v = idx/snakeSegmentsV;
+					if(v<0.05){
+						radius = Math.sin(v/0.05*Math.PI/2)*snakeRadius*0.5;
+						// radius = Math.sqrt(1 - (v-1)*(v-1))/0.25;
+					}else if(v<0.5){
+						radius = 0.5*snakeRadius;
+					}else{
+						radius = -v*snakeRadius+snakeRadius;
+					}
+
+					//spline point
+					var p = path.getPoint( n );
+					var t2 = path.getTangent( n );
+
+					//rotation
+					var axis2 = new THREE.Vector3();
+					var up2 = new THREE.Vector3(0,0,1);
+					var mtxRot1 = new THREE.Matrix4();
+					axis2.cross(up2, t2).normalize();
+					var r2 = Math.acos(up2.dot(t2));
+					mtxRot1.makeRotationAxis( axis2, r2 );
+					
+					//translation for position
+					var mtxTrn = new THREE.Matrix4();
+					mtxTrn.translate(p);
+	
+					for (var k = 0; k < snakeSegmentsH+1; ++k) {
+						var n2 = j+k;
+
+						var mtx1 = new THREE.Matrix4();
+						if(k==snakeSegmentsH){
+							mtx1.translate(new THREE.Vector3( radius, 0, 0 ) );
+						}else{
+							mtx1.translate(new THREE.Vector3( radius*Math.cos((k*inc)), radius*Math.sin((k*inc)),	0) );
+						}
+
+						var m = new THREE.Matrix4();
+						m.multiply(mtxTrn, mtxRot1);
+						m.multiplySelf(mtx1);
+						snake.geometry.vertices[n2].getPositionFromMatrix(m);
+
+
+					};
+				};
+				
+				//update vertices
+				snake.geometry.verticesNeedUpdate = true;
+
+			};
+
+			//camera
+			var tx = 150*mousex/window.innerWidth;
+			var tz = 300*(mousey/window.innerHeight);
+			if(tz>0) tz*=-1;
+			tz += 180;
+			var ty = 100*mousey/window.innerHeight;
+			var tv = new THREE.Vector3(tx,ty,tz);
+
+			camera.position.addSelf( tv.subSelf(camera.position).multiplyScalar(0.1) )
+
+			camera.lookAt( scene.position )
+			
+			render();
+		}
+
+		function render(){
+//			renderer.clear();
+			renderer.setClearColor( scene.fog.color, 1 );
+			// renderer.render(scene, camera);
+			composerScene.render(0.01);
+
+		}
+
+		function resize() {
+			var stageWidth = window.innerWidth;
+			var stageHeight = window.innerHeight;
+			camera.aspect = stageWidth / stageHeight;
+			renderer.setSize(stageWidth, stageHeight)
+			camera.updateProjectionMatrix();
+		}
+
+		function mouseMove(ev){
+
+			omx = mousex;
+			omy = mousey;
+			mousex = ev.clientX - window.innerWidth / 2;
+			mousey = ev.clientY - window.innerHeight / 2;
+
+		}
+
+
+	</script>
+</body>
+</html>

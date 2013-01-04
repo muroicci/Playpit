@@ -143,6 +143,18 @@
 	"subColor1":"#00ff00",
 	"subColor2":"#0000ff",
 	"text":"Click and drag to change camera angle, Mousewheel to zoom in/out. Turn on Sound for full experience."
+},
+
+{
+	"link":"/13/index.html",
+	"backgroundColor":"#cccccc",
+	"textColor1":"#57b711",
+	"textColor2":"#ffffff",
+	"textColor3":"#ffffff",
+	"themeColor":"#57b711",
+	"subColor1":"#ff0000",
+	"subColor2":"#fcfe43",
+	"text":"Move your mouse to change angle.<br />Happy new year of snake, 2013"
 }
 
 ]
