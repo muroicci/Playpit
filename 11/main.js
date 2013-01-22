@@ -87,7 +87,7 @@ function createScene(){
 	world = new CANNON.World();
 	world.gravity.set(0,-250,0);
 	world.broadphase = new CANNON.NaiveBroadphase();;
-	world.iterations = 2;
+	world.solver.iterations = 10;
 
 	//light
     var ambient = new THREE.AmbientLight( 0x333333);
@@ -108,32 +108,37 @@ function createScene(){
 	ground.rotation.x = -Math.PI/2;
 	group.add( ground );
 
-	var groundShape = new CANNON.Plane( new CANNON.Vec3(0,1,0));
+	var groundShape = new CANNON.Plane();
 	var groundBody = new CANNON.RigidBody( 0, groundShape );
+	groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),- Math.PI/2)
 	world.add(groundBody);
 
 	// plane -x
-    var planeShapeXmin = new CANNON.Plane(new CANNON.Vec3(0,0,1));
+    var planeShapeXmin = new CANNON.Plane();
     var planeXmin = new CANNON.RigidBody(0, planeShapeXmin);
-    planeXmin.position.set(0,0,-50);
+    planeXmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),  Math.PI/2);
+    planeXmin.position.x = -50;
     world.add(planeXmin);
 
     // Plane +x
-    var planeShapeXmax = new CANNON.Plane(new CANNON.Vec3(0,0,-1));
+    var planeShapeXmax = new CANNON.Plane();
     var planeXmax = new CANNON.RigidBody(0, planeShapeXmax);
-    planeXmax.position.set(0,0,50);
+    planeXmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0), - Math.PI/2);
+    planeXmax.position.x = 50;
     world.add(planeXmax);
 
     // Plane -z
-    var planeShapeYmin = new CANNON.Plane(new CANNON.Vec3(1,0,0));
+    var planeShapeYmin = new CANNON.Plane();
     var planeYmin = new CANNON.RigidBody(0, planeShapeYmin);
-    planeYmin.position.set(-50,0,0);
+    planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0), 0);
+    planeYmin.position.z = -50;
     world.add(planeYmin);
 
     // Plane +z
-    var planeShapeYmax = new CANNON.Plane(new CANNON.Vec3(-1,0,0));
+    var planeShapeYmax = new CANNON.Plane();
     var planeYmax = new CANNON.RigidBody(0, planeShapeYmax);
-    planeYmax.position.set(50,0,0);
+    planeYmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0), - Math.PI);
+    planeYmax.position.z = 50;
     world.add(planeYmax);
 
 
@@ -154,11 +159,11 @@ function createScene(){
 		//Physics
 		var randX = (Math.random()*2-1)*10;
 		var randZ = (Math.random()*2-1)*10;
-		var sphereBody = new CANNON.RigidBody(0.40,sphereShape);
+		var sphereBody = new CANNON.RigidBody(1,sphereShape);
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
-		sphereBody.position.set(pos.x + randX, pos.y, pos.z+randZ);
+		sphereBody.position.set(pos.x + randX, pos.y+200, pos.z+randZ);
 		sphereMesh.position = sphereBody.position;
 		// sphereMesh.rotation = sphereBody.rotation;
 
@@ -210,7 +215,7 @@ function createHeavyObj(chr){
 
 	var r = 10+Math.random()*30;
 	var sphereShape = new CANNON.Sphere(r);
-	var heavyObjBody = new CANNON.RigidBody(75, sphereShape);
+	var heavyObjBody = new CANNON.RigidBody(10, sphereShape);
 	heavyObjBody.position.set(50*(2*Math.random()-1), r/2+400,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
 
