@@ -75,7 +75,7 @@ $(function() {
 
 	//camera
 	camera = new THREE.PerspectiveCamera(40, width / height, 1, 1000);
-	camera.position.set(0, 100, 300)
+	camera.position.set(0, 100, 400)
 	scene.add(camera);
 
 	cameraTarget = new THREE.Object3D();
@@ -417,9 +417,9 @@ function createScene() {
 
 	var ballR = 10;
 	var ballGeom = new THREE.SphereGeometry(ballR,ballR,8);
-	var ballMat = new THREE.MeshPhongMaterial({color:0xcc0000});
 
 	for( var i=0; i<ballNum; i++){
+		var ballMat = materials[ i%materials.length ];
 		var ball = new THREE.Mesh(ballGeom, ballMat);
 		ball.castShadow = ball.receiveShadow = true;
 		var rnd = Math.random()*2+0.4;
@@ -428,12 +428,14 @@ function createScene() {
 		balls.push(ball);
 		//physics
 		var sphereShape = new CANNON.Sphere(ballR*rnd);
-		var sphereBody = new CANNON.RigidBody(1, sphereShape );
+		var sphereBody = new CANNON.RigidBody(10, sphereShape );
 		ballBodies.push(sphereBody);
 		var pos = new THREE.Vector3(Math.random()*2-1, Math.random()*2, Math.random()*2-1);
 		pos.normalize().multiplyScalar(Math.random()*200);
 		sphereBody.position.set(pos.x, pos.y, pos.z);
 		ball.position = sphereBody.position;
+		ball.useQuaternion = true;
+		ball.quaternion = sphereBody.quaternion;
 		world.add(sphereBody);
 	}
 
@@ -517,6 +519,7 @@ function createBlob(root) {
 
 
 function animate() {
+
 	requestAnimationFrame(animate);
 
 	trackball.update();
@@ -527,17 +530,22 @@ function animate() {
 	updateBlobs(0);
 	
 	//physics
-	var beatTiming = (Date.now() - startTimes)%3000 < 100;
-	for(var i=0, l=ballBodies.length; i<l; i++){
-		var v = ballBodies[i].position.copy();
-		v.normalize();
-		v.mult(-4, v);
-		if(beatTiming && ballBodies[i].position.y<40 ) v.y += 100+Math.random()*200;
-		ballBodies[i].velocity.vadd(v, ballBodies[i].velocity);
+	var beatTiming = (Date.now() - startTimes)%5000 < 30;
+		for(var i=0, l=ballBodies.length; i<l; i++){
+			var v = ballBodies[i].position.copy();
+			v.normalize();
+			v.mult(-2, v);
+			if(beatTiming) {
+				if(ballBodies[i].position.y<40) {
+					v.x *= 5; v.z*=5;
+					v.y += 100+Math.random()*200;
+				}
+			}
+			ballBodies[i].velocity.vadd(v, ballBodies[i].velocity);
 	}
 
-	if (!world.paused) {
-		world.step(1.0/60.0);
+	if(!world.paused) {
+		world.step(1/28);
 	}
 
 	render();
@@ -624,7 +632,6 @@ function updateBlobs(i) {
 		//add more blobs around knees and ankles
 		if (nName == "LeftLeg" || nName == "LeftFoot" ||
 			nName == "RightLeg" || nName == "RightFoot" ) {
-			//console.log(nodes[_i].parent.matrixWorld == nodes[_i].matrixWorld)
 			var wVecP = nodes[_i].parent.matrixWorld.getPosition().clone(); 
 			wVecP.subSelf(bp);
 			wVecP.multiplyScalar(0.5/metaballFieldSize);
