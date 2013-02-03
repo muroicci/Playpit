@@ -21,7 +21,7 @@ materials.push (
 
 materials.push (
 	new THREE.MeshPhongMaterial({
-		color:0x36f3ff,
+		color:0x00baff,
 		specular: 0xffffff,
 		ambient: 0xffffff,
 		shininess: 250

@@ -116,6 +116,8 @@ function update(n){
 	//footer
 	$('div.tate-line').stop().animate({color:textColor2}, time);
 	$('div.copyright').stop().animate({color:textColor3}, time);
+	$('div.author').stop().animate({color:textColor3}, time);
+	$('div.author>a').stop().animate({color:themeColor}, time);
 	
 	//content
 		$('<div class="cover_rect"/>')

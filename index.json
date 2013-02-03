@@ -155,7 +155,20 @@
 	"subColor1":"#ff0000",
 	"subColor2":"#fcfe43",
 	"text":"Move your mouse to change angle.<br />Happy new year of snake, 2013"
+},
+
+{
+	"link":"/14/index.html",
+	"backgroundColor":"#cccccc",
+	"textColor1":"#00baff",
+	"textColor2":"#ffffff",
+	"textColor3":"#ffffff",
+	"themeColor":"#00baff",
+	"subColor1":"#83a700",
+	"subColor2":"#f9005d",
+	"text":"Drag to change camera angle."
 }
+
 
 ]
 

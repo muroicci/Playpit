@@ -16,7 +16,7 @@ var metaballFieldSize = 100;
 
 var	metaballController = {
 		isolation: 356,
-		resolution: 40,
+		resolution: 30,
 		subtract: 18,
 		strength: 4.5
 	}
@@ -24,35 +24,20 @@ var	metaballController = {
 
 var motions = [];
 
-var audio;
-
-var frameBufferSize, bufferSize, signal, peak;
-var fft;
-var context;
-var source;
-var audioProcessor;
-var gainNode;
-var currentvalue = [];
-var maxvalue = [];
-
 var channels = [];
 var root;
 var startTime, currentFrame=0, numFrames, secsPerFrames;
 var nodes = [];
-var spotLightColors = [0x00fffff, 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff7800];
 
-var includes = ["Spine", "Spine1", "Spine2", "Head", "LeftArm","LeftForeArm", "LeftHand", "", "", "RightArm","RightForeArm", "RightHand", "","LeftUpLeg", "LeftLeg", "LeftFoot","LeftToeBase","RightUpLeg","RightLeg","RightFoot","RightToeBase"];
+var includes = ["Hips", "Spine", "Spine1", "Spine2", "Head", "LeftArm","LeftForeArm", "LeftHand", "", "", "RightArm","RightForeArm", "RightHand", "","LeftUpLeg", "LeftLeg", "LeftFoot","LeftToeBase","RightUpLeg","RightLeg","RightFoot","RightToeBase"];
 
 var addBlobs = ["Head"];
 
-var isMute = true;
-
 var TO_RADIAN = Math.PI / 180;
 
-var balls = [], ballNum=50, ballBodies = [];
+var balls = [], ballNum=75, ballBodies = [];
 var world;
 var blobBodies = [];
-
 
 
 $(function() {
@@ -81,25 +66,34 @@ $(function() {
 	cameraTarget = new THREE.Object3D();
 	cameraTarget.position.y = 80;
 
+	//renderer
+	renderer = new THREE.WebGLRenderer({
+
+	});
+	renderer.autoClear = false;
+	renderer.setSize(width, height);
+	renderer.setClearColor( scene.fog.color, 1.0 );
+	renderer.shadowMapEnabled = true;
+	renderer.shadowMapType = THREE.PCFShadowMap;
+	document.body.appendChild(renderer.domElement);
 
 	//light
 	mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-	mainLight.castShadow = false;
 	mainLight.position.set(0, 800, 200);
 	mainLight.lookAt(group.position)
 	scene.add(mainLight);
 
 	spotLight = new THREE.SpotLight(0xfffffff, 0.6, 0);
-	spotLight.castShadow = true;
 	spotLight.position.set( -300, 300, 300 );
 	spotLight.lookAt(group.position)
+	spotLight.castShadow = true;
 	spotLight.shadowCameraNear = 10;
 	spotLight.shadowCameraFar = camera.far;
 	spotLight.shadowCameraFov = 50;
 	spotLight.shadowBias = 0.0001;
 	spotLight.shadowDarkness = 0.3;
-	spotLight.shadowMapWidth = 1024;
-	spotLight.shadowMapHeight = 1024;
+	spotLight.shadowMapWidth = 2048;
+	spotLight.shadowMapHeight = 2048;
 	scene.add(spotLight);
 
 	var ambient = new THREE.AmbientLight(0x222222);
@@ -109,40 +103,18 @@ $(function() {
 	sublight.position.set(0, -100, 0);
 	sublight.castShadow = false;
 	sublight.rotation.x = -Math.PI;
-
 	scene.add(sublight);
 
-	//renderer
-	renderer = new THREE.WebGLRenderer();
-	renderer.autoClear = false;
-	renderer.setSize(width, height);
-	renderer.setClearColorHex(scene.fog.color.getHex(), 1.0);
-	renderer.shadowMapEnabled = true;
-	renderer.shadowMapType = THREE.PCFShadowMap;
-	document.body.appendChild(renderer.domElement);
-
 	//stats
-	stats = new Stats();
-	stats.domElement.style.position = 'absolute';
-	container.appendChild(stats.domElement);
+	// stats = new Stats();
+	// stats.domElement.style.position = 'absolute';
+	// container.appendChild(stats.domElement);
 
 	//trackball
 	trackball = new THREE.TrackballControls(camera, renderer.domElement);
 	trackball.zoomSpeed = 0.5;
 	trackball.minDistance = 200;
 	trackball.maxDistance = 600;
-
-	//audio
-	// audio = new Audio();
-	// audio.src = "perfume.mp3";
-	// audio.play();
-	frameBufferSize = 1024;
-	bufferSize = frameBufferSize / 2;
-	signal = new Float32Array(bufferSize);
-	peak = new Float32Array(bufferSize);
-
-	fft = new FFT(bufferSize, 44100);
-
 
 	//load bvh datas
 	createScene();
@@ -155,96 +127,6 @@ $(function() {
 
 });
 
-
-function loadAudio() {
-
-	context = new webkitAudioContext();
-	source = context.createBufferSource();
-	//spectrum node
-	audioProcessor = context.createJavaScriptNode(2048);
-	audioProcessor.onaudioprocess = audioAvailable;
-	source.connect(audioProcessor);
-	audioProcessor.connect(context.destination);
-	//volume manupiration
-	// gainNode = context.createGainNode();
-	// source.connect(gainNode);
-	// gainNode.connect(context.destination);
-
-	//load
-	var request = new XMLHttpRequest();
-	request.open("GET", "perfume.mp3", true);
-	request.responseType = "arraybuffer";
-
-	request.onload = function() {
-		source.buffer = context.createBuffer(request.response, false);
-		source.noteOn(0);
-		startTimes[0] = Date.now();
-		//console.log('play')
-
-		if(!isMute){
-			source.gain.value = 1;
-			$("#mute").text("Mute Sound");
-		}else{
-			source.gain.value = 0;
-			$("#mute").text("Turn On Sound");
-		}
-
-	}
-
-	request.send();
-}
-
-
-function audioAvailable(event) {
-
-	// Copy input arrays to output arrays to play sound
-	var inputArrayL = event.inputBuffer.getChannelData(0);
-	var inputArrayR = event.inputBuffer.getChannelData(1);
-	var outputArrayL = event.outputBuffer.getChannelData(0);
-	var outputArrayR = event.outputBuffer.getChannelData(1);
-
-	var n = inputArrayL.length;
-	for (var i = 0; i < n; ++i) {
-		outputArrayL[i] = inputArrayL[i];
-		outputArrayR[i] = inputArrayR[i];
-		signal[i] = (inputArrayL[i] + inputArrayR[i]) / 2; // create data frame for fft - deinterleave and mix down to mono
-	}
-
-	// perform forward transform
-	fft.forward(signal);
-
-	var mult = 0;
-	for (var i = 0; i < bufferSize / 8; i++) {
-		magnitude = fft.spectrum[i]; // multiply spectrum by a zoom value
-		currentvalue[i] = magnitude;
-
-		if (magnitude > maxvalue[i]) {
-			maxvalue[i] = magnitude;
-		} else {
-			if (maxvalue[i] > 10) {
-				maxvalue[i]--;
-			}
-		}
-		if(i<bufferSize/32) mult += magnitude;
-	}
-	if (mult>1) {
-		var col = spotLightColors[ Math.floor(Math.random()*spotLightColors.length-1)];
-		mainLight.color = spotLight.color = sublight.color = new THREE.Color(col);
-		spotLight.intensity = mult*24;
-		sublight.intensity = mult*10;
-
-	}else{
-		if(!isMute){
-			spotLight.intensity *= 0.4;
-			sublight.intensity *= 0.4;
-		}else{
-			spotLight.intensity = 0;
-			sublight.intensity = 0.75;
-			mainLight.color = sublight.color = new THREE.Color(0xffffff);
-		}
-	}
-
-}
 
 
 //load and parsing data: modified from Saqoosha's code "http://saqoo.sh/a/labs/perfume/2/"
@@ -355,7 +237,6 @@ function createScene() {
 	world.gravity.set(0,-300,0);
 	world.broadphase = new CANNON.NaiveBroadphase();
 	world.solver.iterations = 10;
-	console.log(world.solver.k)
 	world.solver.k = 1000;
 	world.solver.d = 0;
 
@@ -416,7 +297,7 @@ function createScene() {
 	//balls
 
 	var ballR = 10;
-	var ballGeom = new THREE.SphereGeometry(ballR,ballR,8);
+	var ballGeom = new THREE.SphereGeometry(ballR,ballR,24,24);
 
 	for( var i=0; i<ballNum; i++){
 		var ballMat = materials[ i%materials.length ];
@@ -473,30 +354,16 @@ function createScene() {
 
 
 	//gui
-	gui = new DAT.GUI();
-	gui.add(metaballController, "isolation", 0, 2400, 1);
-	gui.add(metaballController, "resolution", 8, 128, 1);
-	gui.add(metaballController, "subtract", 1, 60, 1);
-	gui.add(metaballController, "strength", 1, 5, 0.01);
+	// gui = new DAT.GUI();
+	// gui.add(metaballController, "isolation", 0, 2400, 1);
+	// gui.add(metaballController, "resolution", 8, 128, 1);
+	// gui.add(metaballController, "subtract", 1, 60, 1);
+	// gui.add(metaballController, "strength", 1, 5, 0.01);
 
-	//mute
-	$("#mute").click(mute);
 
 
 }
 
-
-function mute(){
-	if(isMute){
-		source.gain.value = 1;
-		$("#mute").text("Mute Sound");
-	}else{
-		source.gain.value = 0;
-		$("#mute").text("Turn On Sound");
-	}
-	isMute = !isMute;
-	return false;
-}
 
 function createBlob(root) {
 
@@ -510,9 +377,13 @@ function createBlob(root) {
 	var mb = new THREE.MarchingCubes(metaballController.resolution, material)
 	mb.castShadow = true;
 	mb.receiveShadow = true;
+
 	mb.isolation = metaballController.isolation;
 	mb.position = root.position;
 	mb.scale.set(metaballFieldSize, metaballFieldSize, metaballFieldSize);
+
+	var geom = mb.generateGeometry();
+
 	group.add(mb);
 	return mb;
 }
@@ -527,7 +398,7 @@ function animate() {
 	camera.lookAt(cameraTarget.position)
 
 	//blobs
-	updateBlobs(0);
+	updateBlobs();
 	
 	//physics
 	var beatTiming = (Date.now() - startTimes)%5000 < 30;
@@ -538,23 +409,23 @@ function animate() {
 			if(beatTiming) {
 				if(ballBodies[i].position.y<40) {
 					v.x *= 5; v.z*=5;
-					v.y += 100+Math.random()*200;
+					v.y += 100+Math.random()*300;
 				}
 			}
 			ballBodies[i].velocity.vadd(v, ballBodies[i].velocity);
 	}
 
 	if(!world.paused) {
-		world.step(1/28);
+		world.step(1/60);
 	}
 
 	render();
-	stats.update();
+	// stats.update();
 }
 
 
 
-function updateBlobs(i) {
+function updateBlobs() {
 
 
 	if (channels == undefined || metaball==undefined) return;
@@ -629,6 +500,13 @@ function updateBlobs(i) {
 			metaball.addBall(wVec.x, wVec.y, wVec.z, strength, subtract);
 		}
 
+		//add more belly
+		// if(nName=="Hips"||nName=="Spine"){
+		// 	var v = wVec.clone();
+		// 	v.z+=0.1;
+		// 	metaball.addBall(v.x, v.y, v.z, strength, subtract);
+		// }
+
 		//add more blobs around knees and ankles
 		if (nName == "LeftLeg" || nName == "LeftFoot" ||
 			nName == "RightLeg" || nName == "RightFoot" ) {
@@ -641,6 +519,7 @@ function updateBlobs(i) {
 		}
 
 
+
 	}
 	// metaball.addPlaneY(1, 24);
 
@@ -648,7 +527,7 @@ function updateBlobs(i) {
 
 
 function render() {
-	// renderer.clear();
+	// renderer.clear(false, true, false);
 	// renderer.render(scene, camera);
 	composerScene.render();
 }

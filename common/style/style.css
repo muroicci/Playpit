@@ -16,16 +16,19 @@ body{
 a:link{
 	color:#666666;
 	text-decoration: none;
+	font-weight: bold;
 }
 
 a:visited{
 	color:#666666;
 	text-decoration: none;
+	font-weight: bold;
 }
 
 a:hover{
 	color:#ffffff;
 	text-decoration: none;
+	font-weight: bold;
 }
 
 svg{
@@ -53,6 +56,8 @@ header>h1{
 	text-transform: uppercase;
 	text-indent: 3px;
 	margin-left: -3px;
+	font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
 div#content_info{
@@ -119,6 +124,8 @@ section>h1{
 	width:63px;
 	height:45px;
 	padding: 0px 0px 0px 2px;
+	font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
 section>p{
@@ -126,6 +133,8 @@ section>p{
 	font: 12px/15px "MisoRegular", Verdana, sans-serif;
 	text-transform: uppercase;
 	width:200px;
+	font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
 #content{
@@ -169,4 +178,32 @@ footer{
 	-webkit-transform: rotate(90deg); 
 	-moz-transform: rotate(90deg);
 	text-transform: uppercase;
+	font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+.author{
+	font: 9px/12px "MisoRegular", Verdana, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	position: absolute;
+	bottom: 10px;
+	left: 30px;
+	margin:0;
+	padding: 0;
+	font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+
+.author>a{
+	font: 9px/12px "MisoBold", Verdana, sans-serif;
+}
+
+.author>a:link{
+	text-decoration: none;
+}
+
+.author>a:hover{
+	text-decoration: underline;
 }
