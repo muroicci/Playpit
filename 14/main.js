@@ -391,7 +391,9 @@ function createBlob(root) {
 
 function animate() {
 
-	requestAnimationFrame(animate);
+	setTimeout(function(){
+		requestAnimationFrame(animate);
+	}, 1000/60)
 
 	trackball.update();
 	//camera

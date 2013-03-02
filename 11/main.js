@@ -213,7 +213,7 @@ function createHeavyObj(chr){
 		removingBall(0);
 	}
 
-	var r = 10+Math.random()*30;
+	var r = 10+Math.random()*20;
 	var sphereShape = new CANNON.Sphere(r);
 	var heavyObjBody = new CANNON.RigidBody(10, sphereShape);
 	heavyObjBody.position.set(50*(2*Math.random()-1), r/2+400,50*(2*Math.random()-1))
@@ -241,7 +241,9 @@ function createHeavyObj(chr){
 
 
 function animate(){
-	requestAnimationFrame(animate);
+	setTimeout(function(){
+		requestAnimationFrame(animate);
+	}, 1000/60);
 	TWEEN.update();
 	update();
 	render();

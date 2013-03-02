@@ -94,7 +94,9 @@
 		}
 		
 		function animate(){
-			requestAnimationFrame(animate);
+			setTimeout(function(){
+				requestAnimationFrame(animate);
+			}, 1000/60);
 			update();
 		}
 		

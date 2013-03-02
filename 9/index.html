@@ -229,21 +229,15 @@
 				}
 
 				function animate(){
-					requestAnimationFrame(animate);
+					setTimeout(function(){
+						requestAnimationFrame(animate);	
+					}, 1000/60)
+					
 
 					update();
 
 					renderer.clear();
 					
-					//color
-					// scene.overrideMaterial = null;
-					// renderer.render( scene, camera, rtTextureColor, true);
-					// //depth
-					// scene.overrideMaterial = material_depth;
-					// renderer.render( scene, camera, rtTextureDepth, true);
-					// renderer.render( scene, camera);
-					// composerScene.render();
-//					renderer.render(scene, camera)
 					composerScene.render(0.1);
 
 

@@ -169,7 +169,10 @@
 		}
 		
 		function animate(){
-			requestAnimationFrame(animate);
+			setTimeout(function(){
+				requestAnimationFrame(animate);	
+			}, 1000/60);
+			
 			
 			camera.position.x += (mx*2 - camera.position.x) * 0.05;
 			camera.position.y += (my*2 - camera.position.y) * 0.05;

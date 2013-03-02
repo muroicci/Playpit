@@ -117,7 +117,9 @@
 		}
 		
 		function animate(){
-			requestAnimationFrame(animate);
+			setTimeout(function(){
+				requestAnimationFrame(animate);
+			}, 1000/60);
 			update();
 			camera.position.y += (my/2+100 - camera.position.y) * 0.05;
 			group.rotation.y += (((mx-stageWidth*0.5)/10*pi/180  + 0 - group.rotation.y) * 0.05);
