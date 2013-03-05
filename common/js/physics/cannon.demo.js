@@ -26,6 +26,7 @@
        gy:0.0,
        gz:0.0,
        iterations:3,
+       tolerance:0.0001,
        k:1000,
        d:3,
        scene:0,
@@ -40,6 +41,7 @@
        paused:false,
        shadows:true,
        aabbs:false,
+       profiling:false,
     };
 
     // Extend settings with options
@@ -57,6 +59,8 @@
     var visuals = [];
     var scenes = [];
     var gui = null;
+    var smoothie = null;
+    var smoothieCanvas = null;
     var scenePicker = {};
 
     var three_contactpoint_geo = new THREE.SphereGeometry( 0.1, 6, 6);
@@ -291,7 +295,9 @@
                 if(!(c instanceof CANNON.DistanceConstraint))
                     continue;
 
-                var bi=c.body_i, bj=c.body_j, line = distanceConstraintMeshCache.request();
+                var nc = c.equations.normal;
+
+                var bi=nc.bi, bj=nc.bj, line = distanceConstraintMeshCache.request();
                 var i=bi.id, j=bj.id;
 
                 // Remember, bj is either a Vec3 or a Body.
@@ -313,21 +319,19 @@
                 var c = world.constraints[ci];
                 if(!(c instanceof CANNON.PointToPointConstraint))
                     continue;
-
-                var bi=c.body_i, bj=c.body_j, relLine1 = p2pConstraintMeshCache.request(), relLine2 = p2pConstraintMeshCache.request(), diffLine = p2pConstraintMeshCache.request();
+                var n = c.equations.normal;
+                var bi=n.bi, bj=n.bj, relLine1 = p2pConstraintMeshCache.request(), relLine2 = p2pConstraintMeshCache.request(), diffLine = p2pConstraintMeshCache.request();
                 var i=bi.id, j=bj.id;
 
-                relLine1.scale.set( c.ri.x, c.ri.y, c.ri.z );
-                relLine2.scale.set( c.rj.x, c.rj.y, c.rj.z );
-                diffLine.scale.set( c.piWorld.x-c.pjWorld.x,
-                                    c.piWorld.y-c.pjWorld.y,
-                                    c.piWorld.z-c.pjWorld.z );
+                relLine1.scale.set( n.ri.x, n.ri.y, n.ri.z );
+                relLine2.scale.set( n.rj.x, n.rj.y, n.rj.z );
+                diffLine.scale.set( -n.penetrationVec.x, -n.penetrationVec.y, -n.penetrationVec.z );
                 makeSureNotZero(relLine1.scale);
                 makeSureNotZero(relLine2.scale);
                 makeSureNotZero(diffLine.scale);
                 bi.position.copy(relLine1.position);
                 bj.position.copy(relLine2.position);
-                c.pjWorld.copy(diffLine.position);
+                n.bj.position.vadd(n.rj,diffLine.position);
             }
         }
         p2pConstraintMeshCache.hideCached();
@@ -474,6 +478,60 @@
         stats.domElement.style.top = '0px';
         stats.domElement.style.zIndex = 100;
         container.appendChild( stats.domElement );
+
+        // Smoothie (test)
+        smoothieCanvas = document.createElement("canvas");
+        smoothieCanvas.style.position = 'absolute';
+        smoothieCanvas.style.top = '0px';
+        smoothieCanvas.style.zIndex = 100;
+        container.appendChild( smoothieCanvas );
+        smoothie = new SmoothieChart({
+            maxDataSetLength:100,
+            millisPerPixel:10,
+            grid: {
+                strokeStyle:'rgb(125, 125, 125)',
+                fillStyle:'rgb(0, 0, 0)',
+                lineWidth: 1,
+                millisPerLine: 250,
+                verticalSections: 6
+            },
+            labels: {
+                fillStyle:'rgb(180, 180, 180)'
+            }
+        });
+        smoothie.streamTo(smoothieCanvas);
+        // Create time series for each profile label
+        var lines = {};
+        var colors = [[255, 0, 0],[0, 255, 0],[0, 0, 255],[255,255,0],[255,0,255],[0,255,255]];
+        var i=0;
+        for(var label in world.profile){
+            var c = colors[i%colors.length];
+            lines[label] = new TimeSeries({
+                label : label,
+                fillStyle : "rgb("+c[0]+","+c[1]+","+c[2]+")"
+            });
+            i++;
+        }
+        // Add a random value to each line every second
+        world.addEventListener("postStep",function(evt) {
+            for(var label in world.profile)
+                lines[label].append(world.time * 1000, world.profile[label]);
+        });
+        // Add to SmoothieChart
+        var i=0;
+        for(var label in world.profile){
+            var c = colors[i%colors.length];
+            smoothie.addTimeSeries(lines[label],{
+                strokeStyle : "rgb("+c[0]+","+c[1]+","+c[2]+")",
+                fillStyle:"rgba("+c[0]+","+c[1]+","+c[2]+",0.3)",
+                lineWidth:1
+            });
+            i++;
+        }
+        world.doProfiling = false;
+        smoothie.stop();
+        smoothieCanvas.style.display = "none";
+
 
         // Trackball controls
         controls = new THREE.TrackballControls( camera, renderer.domElement );
@@ -626,12 +684,30 @@
                 renderer.clearTarget( light.shadowMap );
             }
         });
-    rf.add(settings,'aabbs');
+        rf.add(settings,'aabbs');
+        rf.add(settings,'profiling').onChange(function(profiling){
+            if(profiling){
+                world.doProfiling = true;
+                smoothie.start();
+                smoothieCanvas.style.display = "block";
+            } else {
+                world.doProfiling = false;
+                smoothie.stop();
+                smoothieCanvas.style.display = "none";
+            }
+
+        });
 
         // World folder
         var wf = gui.addFolder('World');
         // Pause
-        wf.add(settings, 'paused');
+        wf.add(settings, 'paused').onChange(function(p){
+            /*if(p){
+                smoothie.stop();
+            } else {
+                smoothie.start();
+            }*/
+        });
         wf.add(settings, 'stepFrequency',60,60*10).step(60);
         var maxg = 100;
         wf.add(settings, 'gx',-maxg,maxg).onChange(function(gx){
@@ -665,6 +741,9 @@
         });
         sf.add(settings, 'd',0,20).step(0.1).onChange(function(d){
             world.solver.setSpookParams(world.solver.k,d);
+        });
+        sf.add(settings, 'tolerance',0.0,10.0).step(0.01).onChange(function(t){
+            world.solver.tolerance = t;
         });
 
         // Scene picker
@@ -789,6 +868,8 @@
         settings.gz = world.gravity.z+0.0;
         settings.k = world.solver.k;
         settings.d = world.solver.d;
+        settings.quatNormalizeSkip = world.quatNormalizeSkip;
+        settings.quatNormalizeFast = world.quatNormalizeFast;
         updategui();
 
         restartGeometryCaches();

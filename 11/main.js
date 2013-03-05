@@ -14,6 +14,9 @@ var balls = [];
 var SHADOW_MAP_WIDTH = 2048;
 var SHADOW_MAP_HEIGHT = 2048;
 
+var maxHeavyObjNum = 4;
+var heavyObjs = [];
+var heavyObjMaterial;
 
 function init(){
 
@@ -47,7 +50,7 @@ function init(){
 
 
 	//renderer
-	renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer({antialias:true});
 	renderer.autoClear = false;
 	renderer.setSize( width, height );
 	renderer.shadowMapEnabled = true;
@@ -100,6 +103,7 @@ function createScene(){
 
 	
 	//ground
+	var groundMaterial = new CANNON.Material();
 	var geometry = new THREE.PlaneGeometry(10000,10000);
 	var planeMaterial = new THREE.MeshBasicMaterial( {color:0xbbbbbb });
 	var ground = new THREE.Mesh( geometry, planeMaterial );
@@ -109,7 +113,7 @@ function createScene(){
 	group.add( ground );
 
 	var groundShape = new CANNON.Plane();
-	var groundBody = new CANNON.RigidBody( 0, groundShape );
+	var groundBody = new CANNON.RigidBody( 0, groundShape, groundMaterial );
 	groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),- Math.PI/2)
 	world.add(groundBody);
 
@@ -141,10 +145,12 @@ function createScene(){
     planeYmax.position.z = 50;
     world.add(planeYmax);
 
+    //cannon material for bouncing
+    var mat = new CANNON.Material();
 
 	//sphere
 	var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0xdddddd, specular: 0xdddddd, ambient: 0xdddddd, shininess: 0, perPixel: true } );
-	for (var i = 0; i < 80; i++) {
+	for (var i = 0; i < 120; i++) {
 
 		var sphereR = Math.random()*6+3;
 		var sphereGeometry = new THREE.SphereGeometry(sphereR,16,16);
@@ -159,7 +165,7 @@ function createScene(){
 		//Physics
 		var randX = (Math.random()*2-1)*10;
 		var randZ = (Math.random()*2-1)*10;
-		var sphereBody = new CANNON.RigidBody(1,sphereShape);
+		var sphereBody = new CANNON.RigidBody(sphereR*0.1, sphereShape, mat);
 
 		//start position
 		var pos = new CANNON.Vec3( 0, i*4+100, 0);
@@ -172,9 +178,20 @@ function createScene(){
 
 	}
 
+	//contact material
+	heavyObjMaterial = new CANNON.Material();
+	var mat_ground1 = new CANNON.ContactMaterial(groundMaterial, mat, 0.0, 0.7);
+	var mat_ground2 = new CANNON.ContactMaterial(groundMaterial, heavyObjMaterial, 0.0, 0.7);
+	var mat_ball = new CANNON.ContactMaterial(mat, mat, 0.0, 0.7);
+	var mat_heavyBall1 = new CANNON.ContactMaterial(heavyObjMaterial, heavyObjMaterial, 0.0, 0.6);
+	var mat_heavyBall2 = new CANNON.ContactMaterial(mat, heavyObjMaterial, 0.0, 0.6);
+	world.addContactMaterial(mat_ground1);
+	world.addContactMaterial(mat_ground2);
+	world.addContactMaterial(mat_ball);
+	world.addContactMaterial(mat_heavyBall1);
+	world.addContactMaterial(mat_heavyBall2);
+
 	createHeavyObj("A");
-
-
 
 }
 
@@ -204,8 +221,6 @@ function removingBall(id){
 }
 
 
-var maxHeavyObjNum = 4;
-var heavyObjs = [];
 
 function createHeavyObj(chr){
 
@@ -215,7 +230,7 @@ function createHeavyObj(chr){
 
 	var r = 10+Math.random()*20;
 	var sphereShape = new CANNON.Sphere(r);
-	var heavyObjBody = new CANNON.RigidBody(10, sphereShape);
+	var heavyObjBody = new CANNON.RigidBody(r*0.75, sphereShape, heavyObjMaterial);
 	heavyObjBody.position.set(50*(2*Math.random()-1), r/2+400,50*(2*Math.random()-1))
 	world.add(heavyObjBody);
 
