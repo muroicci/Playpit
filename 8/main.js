@@ -1,6 +1,5 @@
 
 
-/////// need to revise
 
 		var container, camera, scene, renderer;
 		var target, cTarget;
@@ -26,8 +25,8 @@
 		var mry = 0;
 		var speedMultiply = 1;
 		
-		var stageWidth = 500;
-		var stageHeight = 500;
+		var stageWidth = window.innerWidth;
+		var stageHeight = window.innerHeight;
 		var mx=0;
 		var my=0;
 		
@@ -36,7 +35,7 @@
 		var sphereR = 100;
 		var particleR = 32;
 		var particleNum = 100;
-		var strokeNum = 300;
+		var strokeNum = 500;
 
 		function init(){
 
@@ -93,8 +92,12 @@
 			var renderTargetParameter = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBufer: true, depthBuffer:true };
 			var renderTarget = new THREE.WebGLRenderTarget(stageWidth, stageHeight, renderTargetParameter);
 			
+			var effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+			effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
 			composerScene = new THREE.EffectComposer( renderer,  renderTarget);
 			composerScene.addPass( renderModel );
+			composerScene.addPass( effectFXAA );
 			composerScene.addPass( effectVignette );
 			
 			
@@ -246,9 +249,10 @@
 			rotMat.rotateY(-mrx);
 			rotMat.rotateX(-mry);
 
-			rotMat.multiplyVector3(tVector);
+			// rotMat.multiplyVector3(tVector);
+			tVector.applyMatrix4(rotMat);
 			tVector.multiplyScalar(speedMultiply);
-			target.position.addSelf( tVector )
+			target.position.add( tVector )
 			speedMultiply += (1 - speedMultiply)*0.06;			
 			
 			//camera
@@ -282,7 +286,7 @@
 				v.x = (mrv+0.6)*(i/particleNum+1)*resultX*pi/180;
 				v.y = (mrv+0.3)*(i/particleNum+1)*resultX*pi/180;
 				speed*=1.0002;
-				p.addSelf(v);
+				p.add(v);
 				
 				//pull each other
 				for( var j=0; j<particleNum; j++){
@@ -290,9 +294,9 @@
 						var q = pVectors[j];
 						if( p.distanceTo(q) < 5*pi/180){
 							var vv = new THREE.Vector3();
-							vv = vv.sub(q, p);
+							vv = vv.subVectors(q, p);
 							vv.multiplyScalar( 0.0060 );
-							p.addSelf(vv);
+							p.add(vv);
 						}
 					}
 				}
@@ -319,10 +323,10 @@
 				var mtrr = new THREE.Matrix4();
 				mtrr.rotateY( p.y );
 				
-				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
+				var m = mtrr.multiply( mtr.multiply(mtx) );
 
 				ps.getPositionFromMatrix(m);
-				ps.addSelf( target.position );
+				ps.add( target.position );
 				//set particle position
 				// ptcl.position = pPos[i];
 				particleGeometry.vertices[i] = pPos[i];

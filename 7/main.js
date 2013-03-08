@@ -36,7 +36,7 @@
 		var sphereR = 150;
 		var particleR = 8;
 		var particleNum = 300;
-		var strokeNum = 50;
+		var strokeNum = 100;
 
 		function init(){
 
@@ -99,7 +99,7 @@
 					if(j>0){
 						//colors
 						var lc = new THREE.Color( 0xffffff );
-						lc.setHSV( 0.0, 0.0, (-0.47/strokeNum*j + 0.6)*1 );
+						lc.setHSL( 0.0, 0.0, (-0.47/strokeNum*j + 0.6)*1 );
 						lineColors.push( lc );
 						lineColors.push( lc );
 					}
@@ -226,7 +226,7 @@
 				v.x = (mrv+0.6)*(i/particleNum+1)*resultX*pi/180;
 				v.y = (mrv+0.3)*(i/particleNum+1)*resultX*pi/180;
 				speed*=1.0002;
-				p.addSelf(v);
+				p.add(v);
 				
 				//pull each other
 				for( var j=0; j<particleNum; j++){
@@ -234,9 +234,9 @@
 						var q = pVectors[j];
 						if( p.distanceTo(q) < 10*pi/180){
 							var vv = new THREE.Vector3();
-							vv = vv.sub(q, p);
+							vv = vv.subVectors(q, p);
 							vv.multiplyScalar( 0.0060 );
-							p.addSelf(vv);
+							p.add(vv);
 						}
 					}
 				}
@@ -264,9 +264,10 @@
 				var mtrr = new THREE.Matrix4();
 				mtrr.rotateY( p.y );
 				
-				var m = mtrr.multiplySelf( mtr.multiplySelf(mtx) );
+				var m = mtrr.multiply( mtr.multiply(mtx) );
 
-				ps = m.getPosition();
+				// ps = m.getPosition();
+				ps = ps.clone().getPositionFromMatrix(m);
 				// ptcl.position = ps.clone();
 				particleGeometry.vertices[i] = ps.clone();
 				// ptcl.set(pps.x, pps.y, pps.z);

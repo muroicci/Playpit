@@ -116,13 +116,12 @@ function init() {
 				if(j>0) translateMtx.translate(previous);
 
 				var rotationMtx = new THREE.Matrix4();
-				// var rndVec = new THREE.Vector3( Math.random()*2-1, Math.random()*2-1, Math.random()*2-1).normalize();
 				rotationMtx.rotateByAxis(rndVec, 15  * pi / 180);
 
 				var resultMtx = new THREE.Matrix4();
-				resultMtx.multiply(rotationMtx, translateMtx);
+				resultMtx.multiplyMatrices(rotationMtx, translateMtx);
 
-				resultMtx.multiplyVector3(bvec);
+				bvec.applyMatrix4(resultMtx);
 				pPos[i].push(bvec);
 				previous = bvec;
 				vertices.push(bvec);

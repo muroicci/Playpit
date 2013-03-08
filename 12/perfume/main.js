@@ -501,9 +501,11 @@ function updateBlobs(i) {
 	var nlen = nodes[i].length;
 	for (var _i = 0; _i < nlen; _i++) {
 
-		var wVec = nodes[i][_i].matrixWorld.getPosition(); //new THREE.Vector3(roots[i].matrixWorld.n14, roots[i].matrixWorld.n24, roots[i].matrixWorld.n34);
+		// var wVec = nodes[i][_i].matrixWorld.getPosition();
+		var wVec = new THREE.Vector3();
+		wVec = wVec.getPositionFromMatrix(nodes[i][_i].matrixWorld);
 		var bp = roots[i].position.clone();
-		wVec.subSelf(bp);
+		wVec.sub(bp);
 
 		var px = wVec.x / (metaballFieldSize)*0.5 + 0.5;
 		var py = wVec.y / (metaballFieldSize)*0.5 + 0.5;
@@ -520,12 +522,15 @@ function updateBlobs(i) {
 
 		//add more blobs around knees and ankles
 		if (nName == "RightKnee" || nName == "LeftKnee" || nName == "RightAnkle" || nName == "LeftAnkle") {
-			var wVecP = nodes[i][_i - 1].matrixWorld.getPosition(); //new THREE.Vector3(nodes[i][_i - 1].matrixWorld.n14, nodes[i][_i - 1].matrixWorld.n24, nodes[i][_i - 1].matrixWorld.n34);
-			var vec = wVec.lerpSelf(wVecP, 0.5);
+			// var wVecP = nodes[i][_i - 1].matrixWorld.getPosition();
+			var wVecP = new THREE.Vector3();
+			wVecP = wVecP.getPositionFromMatrix(nodes[i][_i - 1].matrixWorld);
+			var vec = wVecP.lerp(wVecP, 0.5);
 			px = (vec.x - roots[i].position.x) / (metaballFieldSize * 2) + 0.5;
 			py = (vec.y - roots[i].position.y) / (metaballFieldSize * 2) + 0.5;
 			pz = (vec.z - roots[i].position.z) / (metaballFieldSize * 2) + 0.5;
 			metaballs[i].addBall(px, py, pz, strength, subtract);
+
 		}
 
 

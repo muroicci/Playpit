@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>The Year of Snake | Playpit 13</title>
-	<script src="/common/js/Three.js" type="text/javascript" ></script>
+	<script src="/common/js/three.min.js" type="text/javascript" ></script>
 	
 	<script src="/common/js/Detector.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/common/js/controls/TrackballControls.js" type="text/javascript"></script>
@@ -101,7 +101,7 @@
 			scene.add(ambientLight);
 
 			var spotLight1 = new THREE.SpotLight( 0xffffff, 0.8, 10000, true );
-			spotLight1.color.setHSV( 0.05, 0.05, 1 );
+			spotLight1.color.setHSL( 0.05, 0.05, 1 );
 			spotLight1.position.set( -30, 30, 150 );
 			spotLight1.lookAt( scene.position );
 			spotLight1.castShadow = true;
@@ -116,7 +116,7 @@
 			scene.add( spotLight1 );
 
 			var pointLight2 = new THREE.PointLight( 0xffffff, 0.1, 10000 );
-			pointLight2.color.setHSV( 0.05, 0.05, 1 );
+			pointLight2.color.setHSL( 0.05, 0.05, 1 );
 			pointLight2.position.set( 600, -600, -600 );
 			scene.add( pointLight2 );
 
@@ -306,7 +306,7 @@
 					var axis2 = new THREE.Vector3();
 					var up2 = new THREE.Vector3(0,0,1);
 					var mtxRot1 = new THREE.Matrix4();
-					axis2.cross(up2, t2).normalize();
+					axis2.crossVectors(up2, t2).normalize();
 					var r2 = Math.acos(up2.dot(t2));
 					mtxRot1.makeRotationAxis( axis2, r2 );
 					
@@ -325,8 +325,8 @@
 						}
 
 						var m = new THREE.Matrix4();
-						m.multiply(mtxTrn, mtxRot1);
-						m.multiplySelf(mtx1);
+						m.multiplyMatrices(mtxTrn, mtxRot1);
+						m.multiply(mtx1);
 						snake.geometry.vertices[n2].getPositionFromMatrix(m);
 
 
@@ -346,7 +346,7 @@
 			var ty = 100*mousey/window.innerHeight;
 			var tv = new THREE.Vector3(tx,ty,tz);
 
-			camera.position.addSelf( tv.subSelf(camera.position).multiplyScalar(0.1) )
+			camera.position.add( tv.sub(camera.position).multiplyScalar(0.1) )
 
 			camera.lookAt( scene.position )
 			

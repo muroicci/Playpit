@@ -3,6 +3,8 @@
 Physijs.scripts.worker = '/common/js/physics/physijs_worker.js';
 // Physijs.scripts.ammo = '/common/js/physics/ammo.js';
 
+if ( window.innerWidth === 0 ) { window.innerWidth = parent.innerWidth; window.innerHeight = parent.innerHeight; }
+
 
 var TO_RADIAN = Math.PI / 180;
 var TO_ANGLE = 180 / Math.PI;
@@ -34,7 +36,7 @@ var loadCompNum = 0;
 var clickedNumbers = [];
 var lastClickedTime;
 
-var friction = 0.25;
+var friction = 0.35;
 var restutition = 0.55;
 
 $(function() {
@@ -81,18 +83,21 @@ function init(){
 	renderer.setClearColor( scene.fog.color, 1.0 );
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapType = THREE.PCFShadowMap;
+	renderer.shadowMapCullFace = THREE.CullFaceBack;
 	document.body.appendChild(renderer.domElement);
 
 	//light
 	mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-	// mainLight = new THREE.SpotLight(0xffffff);
 	mainLight.position.set(-110, 250, 200);
 	mainLight.lookAt(scene.position);
 	mainLight.castShadow = true;
 	mainLight.shadowCameraNear = 10;
-	mainLight.shadowCameraFar = camera.far;
-	mainLight.shadowCameraFov = 30;
-	// mainLight.shadowBias = 0.001;
+	mainLight.shadowCameraFar = 800;
+	mainLight.shadowCameraLeft = -200;
+	mainLight.shadowCameraRight = 200;
+	mainLight.shadowCameraTop = 200;
+	mainLight.shadowCameraBottom = -200;
+	mainLight.shadowBias = 0.00005;
 	mainLight.shadowDarkness = 0.5;
 	mainLight.shadowMapWidth = 1024;
 	mainLight.shadowMapHeight = 1024;
@@ -149,7 +154,7 @@ function init(){
 	// gui.add(mainLight.position, "x", -1000, 1000, 10);
 	// gui.add(mainLight.position, "y", -1000, 1000, 10);
 	// gui.add(mainLight.position, "z", -1000, 1000, 10);
-	// gui.add(mainLight, "shadowCameraFar", -1000, 1000, 10);
+	// gui.add(mainLight, "shadowBias", -0.001, 0.001, 0.0001);
 	// gui.add(mainLight, "shadowCameraFov", -1000, 1000, 10);
 
 
@@ -247,7 +252,7 @@ function createScene() {
 
 	var floorTexture1 = THREE.ImageUtils.loadTexture("images/floor.png");
 	floorTexture1.wrapS = floorTexture1.wrapT = THREE.ReapeatWrapping;
-	floorTexture1.repeat.set(10,1);
+	floorTexture1.repeat.set(10,2);
 
 	var floorTexture2 = THREE.ImageUtils.loadTexture("images/floor.png");
 	floorTexture2.wrapS = floorTexture2.wrapT = THREE.ReapeatWrapping;
@@ -262,7 +267,7 @@ function createScene() {
 		new THREE.MeshLambertMaterial({map:floorTexture1})
 	];
 
-	var floorGeometry1 = new THREE.CubeGeometry(160, 16, 160, 1,1,1);
+	var floorGeometry1 = new THREE.CubeGeometry(160, 32, 160, 1,1,1);
 
 	var floorMaterial = Physijs.createMaterial(
 			new THREE.MeshFaceMaterial(materials),

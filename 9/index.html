@@ -262,7 +262,7 @@
 					//target vector
 					var svec = tVector.clone();
 					svec = svec.multiplyScalar(speedMultiply);
-					target.position.addSelf( svec );
+					target.position.add( svec );
 					speedMultiply += (1-speedMultiply)/(60+speedMultiply);
 
 					//camera
@@ -298,8 +298,8 @@
 						v.y += (0-v.y)/10;
 						v.z += (0-v.z)/10;
 						
-						ps.addSelf(v);
-						ps.addSelf( tVector );
+						ps.add(v);
+						ps.add( tVector );
 						
 						ps.y += (resultY*500-100 -ps.y)/20;
 
@@ -319,26 +319,26 @@
 						if(ps.x>areaLength+target.position.x){ 
 							ps.x = -areaLength + Math.random()*100;
 							ps.z = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
+							ps.add(target.position);
 							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
 						};
 						if(ps.x<-areaLength+target.position.x) {
 							ps.x = areaLength - Math.random()*100;
 							ps.z = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
+							ps.add(target.position);
 							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
 							
 						}
 						if(ps.z>areaLength+target.position.z){
 							ps.z = -areaLength + Math.random()*100;
 							ps.x = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
+							ps.add(target.position);
 							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
 						} 
 						if(ps.z<-areaLength+target.position.z) {
 							ps.z = -areaLength - Math.random()*100;
 							ps.x = (Math.random()*2-1)*areaLength;
-							ps.addSelf(target.position);
+							ps.add(target.position);
 							for(var j=0; j<strokeNum; j++) oldPositions[i][j]= ps.clone();
 						}
 

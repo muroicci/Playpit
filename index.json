@@ -167,6 +167,18 @@
 	"subColor1":"#83a700",
 	"subColor2":"#f9005d",
 	"text":"Drag to change camera angle."
+},
+
+{
+	"link":"/15/index.html",
+	"backgroundColor":"#669BF8",
+	"textColor1":"#F8AB01",
+	"textColor2":"#ffffff",
+	"textColor3":"#ffffff",
+	"themeColor":"#D80101",
+	"subColor1":"#ff0000",
+	"subColor2":"#00ff00",
+	"text":"Drag to change camera angle."
 }
 
 
