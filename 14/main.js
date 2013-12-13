@@ -315,8 +315,8 @@ function createScene() {
 		pos.normalize().multiplyScalar(Math.random()*200);
 		sphereBody.position.set(pos.x, pos.y, pos.z);
 		ball.position = sphereBody.position;
-		ball.useQuaternion = true;
-		ball.quaternion = sphereBody.quaternion;
+		// ball.useQuaternion = true;
+		// console.log(ball.quaternion, sphereBody.quaternion)
 		world.add(sphereBody);
 	}
 
@@ -418,6 +418,13 @@ function animate() {
 	}
 
 	if(!world.paused) {
+		for( i=0, l=ballBodies.length; i<l; i++){
+			balls[i].quaternion.w = ballBodies[i].quaternion.w
+			balls[i].quaternion.x = ballBodies[i].quaternion.x
+			balls[i].quaternion.y = ballBodies[i].quaternion.y
+			balls[i].quaternion.z = ballBodies[i].quaternion.z
+			// balls[i].quaternion = ballBodies[i].quaternion
+		}
 		world.step(1/60);
 	}
 

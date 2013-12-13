@@ -124,19 +124,11 @@
 			renderer.sortObjects = true;
 			container.appendChild( renderer.domElement );
 			
-			//Post proceccing
-			//var vignettEffect = new THREE.ShaderPass( THREE.ShaderExtras( "vignette" ) );
 			
 			//event
 			document.addEventListener('mousemove', mouseMove);
 			document.addEventListener('click', mouseClick);
 			window.addEventListener('resize', resize, false);
-			
-			//stats
-			// stats = new Stats();
-			// stats.domElement.style.position = 'absolute';
-			// stats.domElement.style.top = '0px';
-			// container.appendChild( stats.domElement );
 			
 			animate();
 			
@@ -185,7 +177,6 @@
 		
 		function render(){
 			renderer.clear();
-		//	renderer.render( sceneCube, cameraCube );
 			renderer.render( scene, camera );
 		}
 		
@@ -260,17 +251,14 @@
 				
 				//rotation
 				var mtr = new THREE.Matrix4();
-				mtr.rotateX( p.x );
+				mtr.makeRotationX( p.x );
 				var mtrr = new THREE.Matrix4();
-				mtrr.rotateY( p.y );
+				mtrr.makeRotationY( p.y );
 				
 				var m = mtrr.multiply( mtr.multiply(mtx) );
 
-				// ps = m.getPosition();
 				ps = ps.clone().getPositionFromMatrix(m);
-				// ptcl.position = ps.clone();
 				particleGeometry.vertices[i] = ps.clone();
-				// ptcl.set(pps.x, pps.y, pps.z);
 
 				
 				if(refreshLine){
@@ -292,11 +280,6 @@
 				scene.add( line );
 			}
 			
-			//rotate objects
-			// particles.rotation.y += rotationSpeed;
-			// particles.rotation.x += rotationSpeed;
-			// line.rotation = particles.rotation;
-			//rotationSpeed += ( 0 - rotationSpeed)*0.04;
 			cnt++;
 			
 		}

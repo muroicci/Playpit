@@ -312,16 +312,19 @@
 					
 					//translation for position
 					var mtxTrn = new THREE.Matrix4();
-					mtxTrn.translate(p);
+					// mtxTrn.translate(p);
+					mtxTrn.makeTranslation(p.x, p.y, p.z);
 	
 					for (var k = 0; k < snakeSegmentsH+1; ++k) {
 						var n2 = j+k;
 
 						var mtx1 = new THREE.Matrix4();
 						if(k==snakeSegmentsH){
-							mtx1.translate(new THREE.Vector3( radius, 0, 0 ) );
+							// mtx1.translate(new THREE.Vector3( radius, 0, 0 ) );
+							mtx1.makeTranslation( radius, 0, 0 );
 						}else{
-							mtx1.translate(new THREE.Vector3( radius*Math.cos((k*inc)), radius*Math.sin((k*inc)),	0) );
+							// mtx1.translate(new THREE.Vector3( radius*Math.cos((k*inc)), radius*Math.sin((k*inc)),	0) );
+							mtx1.makeTranslation( radius*Math.cos((k*inc)), radius*Math.sin((k*inc)),	0 );
 						}
 
 						var m = new THREE.Matrix4();

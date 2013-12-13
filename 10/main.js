@@ -85,7 +85,8 @@ function init() {
 			shading: THREE.FlatShading
 		});
 		var geomRotMat = new THREE.Matrix4();
-		geomRotMat.rotateX( pi/2 );
+		geomRotMat.makeRotationX( pi/2 );
+		// geomRotMat.rotateX( pi/2 );
 		geometry.applyMatrix(geomRotMat)
 
 		var mesh = new THREE.Mesh(geometry, material);
@@ -113,10 +114,11 @@ function init() {
 
 				var bvec = new THREE.Vector3(300,0,0);
 				var translateMtx = new THREE.Matrix4();
-				if(j>0) translateMtx.translate(previous);
+				if(j>0) translateMtx.makeTranslation(previous.x, previous.y, previous.z);
+				// if(j>0) translateMtx.translate(previous);
 
 				var rotationMtx = new THREE.Matrix4();
-				rotationMtx.rotateByAxis(rndVec, 15  * pi / 180);
+				rotationMtx.makeRotationAxis(rndVec, 15  * pi / 180);
 
 				var resultMtx = new THREE.Matrix4();
 				resultMtx.multiplyMatrices(rotationMtx, translateMtx);
@@ -132,7 +134,7 @@ function init() {
 					shading: THREE.FlatShading
 				});
 				var geomRotMat = new THREE.Matrix4();
-				geomRotMat.rotateX( pi/2 );
+				geomRotMat.makeRotationX( pi/2 );
 				geometry.applyMatrix(geomRotMat)
 				mesh = new THREE.Mesh(geometry, material);
 				//mesh.matrixAutoUpdate = false;
