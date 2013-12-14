@@ -58,7 +58,7 @@ function init(){
 	renderer.shadowMapDarkness = 0.10;
 	renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
 	renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
-	renderer.setClearColorHex(0xeeeeee, 1.0);
+	renderer.setClearColor(0xeeeeee, 1.0);
 	document.body.appendChild ( renderer.domElement );
 
 	
@@ -160,7 +160,7 @@ function createScene(){
 		sphereMesh.castShadow = true;
 		sphereMesh.receiveShadow = true;
 		group.add( sphereMesh );
-		sphereMesh.useQuaternion = true;
+
 
 		//Physics
 		var randX = (Math.random()*2-1)*10;
@@ -241,7 +241,6 @@ function createHeavyObj(chr){
 	heavyObjMesh.position = heavyObjBody.position;
 	heavyObjMesh.castShadow = true;
 	heavyObjMesh.receiveShadow = true;
-	heavyObjMesh.useQuaternion = true;
 	group.add(heavyObjMesh);
 
 	//light

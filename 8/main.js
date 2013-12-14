@@ -171,12 +171,6 @@
 			document.addEventListener('click', mouseClick);
 			window.addEventListener('resize', resize, false);
 			
-			//stats
-			 // stats = new Stats();
-			 // stats.domElement.style.position = 'absolute';
-			 // stats.domElement.style.top = '0px';
-			 // container.appendChild( stats.domElement );
-			
 			animate();
 			
 		}
@@ -189,7 +183,6 @@
 			};
 			
 			rotationSpeed += 0.05*(2*Math.random()-1);
-//			rotationSpeed += 0.12;
 			if(speedMultiply<30)	speedMultiply *= 3;
 			
 		}
@@ -219,9 +212,6 @@
 			
 			renderer.clear();
 			 composerScene.render(0.1);
-			//renderer.render(scene, camera)
-			
-			//stats.update();
 			
 		}
 		
@@ -327,14 +317,10 @@
 				
 				var m = mtrr.multiply( mtr.multiply(mtx) );
 
-				ps.getPositionFromMatrix(m);
+				ps.setFromMatrixPosition(m);
 				ps.add( target.position );
-				//set particle position
-				// ptcl.position = pPos[i];
 				particleGeometry.vertices[i] = pPos[i];
-				// ptcl.set(0,0,0)
 
-				//set line postition
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
 					oPos[i].pop();
@@ -354,11 +340,6 @@
 				scene.add( line );
 			}
 
-			//rotate objects
-			// particles.rotation.y += rotationSpeed;
-			// particles.rotation.x += rotationSpeed;
-			// line.rotation = particles.rotation;
-			// rotationSpeed += ( 0 - rotationSpeed)*0.04;
 			cnt++;
 
 			

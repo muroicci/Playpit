@@ -257,7 +257,7 @@
 				
 				var m = mtrr.multiply( mtr.multiply(mtx) );
 
-				ps = ps.clone().getPositionFromMatrix(m);
+				ps = ps.clone().setFromMatrixPosition(m);
 				particleGeometry.vertices[i] = ps.clone();
 
 				

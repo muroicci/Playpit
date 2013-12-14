@@ -171,7 +171,8 @@ function parseNode(data) {
 	var done = false, n, node;
 	node = new THREE.Object3D();
 	node.name = data.shift();
-	node.eulerOrder = 'ZXY';
+	// node.eulerOrder = 'ZXY';
+	node.rotation.order = "ZXY"
 	node.matrixAutoUpdate = false;
 	while (!done) {
 		switch (t = data.shift()) {
@@ -494,7 +495,7 @@ function updateBlobs() {
 		if (includes.indexOf(nName) == -1) continue;
 
 		var wVec = new THREE.Vector3();
-		wVec = wVec.getPositionFromMatrix(nodes[_i].matrixWorld);
+		wVec = wVec.setFromMatrixPosition(nodes[_i].matrixWorld);
 		// nodes[_i].matrixWorld.getPosition().clone();
 		wVec.sub(bp);
 		wVec.multiplyScalar(0.5/metaballFieldSize);
@@ -523,7 +524,7 @@ function updateBlobs() {
 			nName == "RightLeg" || nName == "RightFoot" ) {
 			// var wVecP = nodes[_i].parent.matrixWorld.getPosition().clone(); 
 			var wVecP = new THREE.Vector3();
-			wVecP = wVecP.getPositionFromMatrix(nodes[_i].parent.matrixWorld);
+			wVecP = wVecP.setFromMatrixPosition(nodes[_i].parent.matrixWorld);
 			wVecP.sub(bp);
 			wVecP.multiplyScalar(0.5/metaballFieldSize);
 			wVecP.add( new THREE.Vector3(0.5,0.5,0.5) );

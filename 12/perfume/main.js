@@ -108,7 +108,7 @@ $(function() {
 	renderer.shadowMapDarkness = 1.00;
 	renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
 	renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
-	renderer.setClearColorHex(0x000000, 1.0);
+	renderer.setClearColor(0x000000, 1.0);
 	document.body.appendChild(renderer.domElement);
 
 	//stats
@@ -284,7 +284,7 @@ function parseNode(data) {
 	var done, geometry, i, material, n, node, t;
 	node = new THREE.Object3D();
 	node.name = data.shift();
-	node.eulerOrder = 'YXZ';
+	node.rotation.order = 'YXZ';
 	done = false;
 	while (!done) {
 		switch (t = data.shift()) {
@@ -503,7 +503,7 @@ function updateBlobs(i) {
 
 		// var wVec = nodes[i][_i].matrixWorld.getPosition();
 		var wVec = new THREE.Vector3();
-		wVec = wVec.getPositionFromMatrix(nodes[i][_i].matrixWorld);
+		wVec = wVec.setFromMatrixPosition(nodes[i][_i].matrixWorld);
 		var bp = roots[i].position.clone();
 		wVec.sub(bp);
 
@@ -524,7 +524,7 @@ function updateBlobs(i) {
 		if (nName == "RightKnee" || nName == "LeftKnee" || nName == "RightAnkle" || nName == "LeftAnkle") {
 			// var wVecP = nodes[i][_i - 1].matrixWorld.getPosition();
 			var wVecP = new THREE.Vector3();
-			wVecP = wVecP.getPositionFromMatrix(nodes[i][_i - 1].matrixWorld);
+			wVecP = wVecP.setFromMatrixPosition(nodes[i][_i - 1].matrixWorld);
 			var vec = wVecP.lerp(wVecP, 0.5);
 			px = (vec.x - roots[i].position.x) / (metaballFieldSize * 2) + 0.5;
 			py = (vec.y - roots[i].position.y) / (metaballFieldSize * 2) + 0.5;

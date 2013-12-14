@@ -330,7 +330,7 @@
 						var m = new THREE.Matrix4();
 						m.multiplyMatrices(mtxTrn, mtxRot1);
 						m.multiply(mtx1);
-						snake.geometry.vertices[n2].getPositionFromMatrix(m);
+						snake.geometry.vertices[n2].setFromMatrixPosition(m);
 
 
 					};

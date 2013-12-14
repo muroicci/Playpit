@@ -170,7 +170,7 @@ function init() {
 	//renderer
 	renderer = new THREE.WebGLRenderer();
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.setClearColorHex(0xffffff);
+	renderer.setClearColor(0xffffff);
 	// renderer.clearAlpha = 1;
 	renderer.autoClear = false;
 	// renderer.sortObjects = true;
