@@ -1,7 +1,7 @@
 
 'use strict';
-Physijs.scripts.worker = '/common/js/physics/physijs_worker.js';
-// Physijs.scripts.ammo = '/common/js/physics/ammo.js';
+Physijs.scripts.worker = '/js/physics/physijs_worker.js';
+// Physijs.scripts.ammo = '/js/physics/ammo.js';
 
 if ( window.innerWidth === 0 ) { window.innerWidth = parent.innerWidth; window.innerHeight = parent.innerHeight; }
 

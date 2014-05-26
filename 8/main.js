@@ -72,7 +72,7 @@
 			//renderer
 			renderer = new THREE.WebGLRenderer( { antialias:false } );
 			renderer.setSize( stageWidth, stageHeight);
-			renderer.setClearColorHex(0x000000, 1);
+			renderer.setClearColor(0x000000, 1);
 			renderer.autoClear = true;
 			renderer.sortObjects = true;
 			container.appendChild( renderer.domElement );
@@ -171,12 +171,6 @@
 			document.addEventListener('click', mouseClick);
 			window.addEventListener('resize', resize, false);
 			
-			//stats
-			 // stats = new Stats();
-			 // stats.domElement.style.position = 'absolute';
-			 // stats.domElement.style.top = '0px';
-			 // container.appendChild( stats.domElement );
-			
 			animate();
 			
 		}
@@ -189,7 +183,6 @@
 			};
 			
 			rotationSpeed += 0.05*(2*Math.random()-1);
-//			rotationSpeed += 0.12;
 			if(speedMultiply<30)	speedMultiply *= 3;
 			
 		}
@@ -219,9 +212,6 @@
 			
 			renderer.clear();
 			 composerScene.render(0.1);
-			//renderer.render(scene, camera)
-			
-			//stats.update();
 			
 		}
 		
@@ -245,12 +235,14 @@
 			mry += 0.008*(my)*pi/180; //(0.08*(my)*pi/180 - mry)*0.8;
 
 			var tVector = new THREE.Vector3(0,0,10);
-			var rotMat = new THREE.Matrix4();
-			rotMat.rotateY(-mrx);
-			rotMat.rotateX(-mry);
+			var rotMatX = new THREE.Matrix4();
+			var rotMatY = new THREE.Matrix4();
+			rotMatX.makeRotationY(-mrx);
+			rotMatY.makeRotationX(-mry);
 
-			// rotMat.multiplyVector3(tVector);
-			tVector.applyMatrix4(rotMat);
+			// tVector.applyMatrix4(rotMatX);
+			rotMatY = rotMatY.multiply(rotMatX)
+			tVector.applyMatrix4(rotMatY);
 			tVector.multiplyScalar(speedMultiply);
 			target.position.add( tVector )
 			speedMultiply += (1 - speedMultiply)*0.06;			
@@ -319,20 +311,16 @@
 				mtx.setPosition( ps2 );
 				//rotation
 				var mtr = new THREE.Matrix4();
-				mtr.rotateX( p.x );
+				mtr.makeRotationX( p.x );
 				var mtrr = new THREE.Matrix4();
-				mtrr.rotateY( p.y );
+				mtrr.makeRotationY( p.y );
 				
 				var m = mtrr.multiply( mtr.multiply(mtx) );
 
-				ps.getPositionFromMatrix(m);
+				ps.setFromMatrixPosition(m);
 				ps.add( target.position );
-				//set particle position
-				// ptcl.position = pPos[i];
 				particleGeometry.vertices[i] = pPos[i];
-				// ptcl.set(0,0,0)
 
-				//set line postition
 				if(refreshLine){
 					oPos[i].unshift(ps.clone());
 					oPos[i].pop();
@@ -352,11 +340,6 @@
 				scene.add( line );
 			}
 
-			//rotate objects
-			// particles.rotation.y += rotationSpeed;
-			// particles.rotation.x += rotationSpeed;
-			// line.rotation = particles.rotation;
-			// rotationSpeed += ( 0 - rotationSpeed)*0.04;
 			cnt++;
 
 			

@@ -3,7 +3,6 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   App = (function() {
-
     function App() {
       this.render = __bind(this.render, this);
       this.animate = __bind(this.animate, this);
@@ -36,37 +35,38 @@
     }
 
     App.prototype.load = function() {
-      var _this = this;
-      return $.get('data/A_test.bvh', function(data) {
-        var done;
-        _this.data = data.split(/\s+/g);
-        _this.channels = [];
-        done = false;
-        while (!done) {
-          switch (_this.data.shift()) {
-            case 'ROOT':
-              _this.root = _this.parseNode(_this.data);
-              _this.scene.add(_this.root);
-              break;
-            case 'MOTION':
-              _this.data.shift();
-              _this.numFrames = parseInt(_this.data.shift());
-              _this.data.shift();
-              _this.data.shift();
-              _this.secsPerFrame = parseFloat(_this.data.shift());
-              done = true;
+      return $.get('data/nocchi.bvh', (function(_this) {
+        return function(data) {
+          var done;
+          _this.data = data.split(/\s+/g);
+          _this.channels = [];
+          done = false;
+          while (!done) {
+            switch (_this.data.shift()) {
+              case 'ROOT':
+                _this.root = _this.parseNode(_this.data);
+                _this.scene.add(_this.root);
+                break;
+              case 'MOTION':
+                _this.data.shift();
+                _this.numFrames = parseInt(_this.data.shift());
+                _this.data.shift();
+                _this.data.shift();
+                _this.secsPerFrame = parseFloat(_this.data.shift());
+                done = true;
+            }
           }
-        }
-        _this.root.material = new THREE.MeshBasicMaterial({
-          color: 0xff0000
-        });
-        _this.startTime = Date.now();
-        return _this.animate();
-      });
+          _this.root.material = new THREE.MeshBasicMaterial({
+            color: 0xff0000
+          });
+          _this.startTime = Date.now();
+          return _this.animate();
+        };
+      })(this));
     };
 
     App.prototype.parseNode = function(data) {
-      var done, geometry, i, material, n, node, t;
+      var done, geometry, i, material, n, node, t, _i;
       geometry = new THREE.CubeGeometry(3, 3, 3);
       material = new THREE.MeshNormalMaterial;
       node = new THREE.Mesh(geometry, material);
@@ -83,7 +83,7 @@
             break;
           case 'CHANNELS':
             n = parseInt(data.shift());
-            for (i = 0; 0 <= n ? i < n : i > n; 0 <= n ? i++ : i--) {
+            for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
               this.channels.push({
                 node: node,
                 prop: data.shift()
@@ -142,7 +142,9 @@
         }
         n++;
       }
-      if (++this.currentFrame >= this.numFrames) this.currentFrame = 0;
+      if (++this.currentFrame >= this.numFrames) {
+        this.currentFrame = 0;
+      }
       this.render();
       this.stats.update();
       return requestAnimationFrame(this.animate);

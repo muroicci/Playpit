@@ -208,14 +208,14 @@ $(document).ready(function(d){
 		$('<div id="prev_arrow" />')
 		.width(12).height(10).css('cursor', 'pointer')
 		.appendTo($('#prev_link'))
-		.svg().load('/common/images/prev_arrow.svg',{onLoad:function(){console.log('prev')}});
+		.svg().load('images/prev_arrow.svg');
 
 		//next
 		$('#next_link>a').remove();
 		$('<div id="next_arrow" />')
 		.width(12).height(10).css('cursor', 'pointer')
 		.appendTo($('#next_link'))
-		.svg().load('/common/images/next_arrow.svg',{onLoad:function(){console.log('next')}});
+		.svg().load('/images/next_arrow.svg');
 		
 		//load json
 		$(window).load(function(){

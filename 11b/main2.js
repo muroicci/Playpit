@@ -1,8 +1,8 @@
 'use strict'
 
 
-Physijs.scripts.worker = '/common/js/physics/physijs_worker.js';
-Physijs.scripts.ammo = '/common/js/physics/ammo.js';
+Physijs.scripts.worker = '/js/physics/physijs_worker.js';
+Physijs.scripts.ammo = '/js/physics/ammo.js';
 
 var initScene, render, renderer, scene, camera, box;
 	
@@ -43,8 +43,8 @@ var initScene, render, renderer, scene, camera, box;
 
 
 // // 'use strict';
-// Physijs.scripts.worker = '/common/js/physics/physijs_worker.js';
-// Physijs.scripts.ammo = '/common/js/physics/ammo.js';
+// Physijs.scripts.worker = '/js/physics/physijs_worker.js';
+// Physijs.scripts.ammo = '/js/physics/ammo.js';
 
 // var gui;
 
